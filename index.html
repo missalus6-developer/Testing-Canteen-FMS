@@ -241,7 +241,7 @@ label{font-size:11px;color:var(--text2);margin-bottom:5px;display:block;font-fam
 //  SALUS – Google Sheets backend via Apps Script
 //  Backend URL: deployed Apps Script web app
 // ============================================================
-var API = "https://script.google.com/macros/s/AKfycbzpNsMAlN3CfQkYiC7BFrXntooDo_DnioksZwUGuximEz00qrQXONAXv2-GXkh-7f4NpA/exec";
+var API = "https://script.google.com/macros/s/AKfycbyV0r2vH26XOCzuLDhDsh6EAg0tITSKNvMP6QojC_DVWec2gKYbOFFohsJbme9qMtdp/exec";
 
 function esc(s){if(!s)return"";return(""+s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
 function pad(n){return n<10?"0"+n:""+n;}
@@ -385,7 +385,7 @@ document.getElementById("submit-btn").addEventListener("click",function(){
       return;
     }
     setBadge("sent");
-    toast("✅ "+staffList.length+" staff Google Sheets mein save ho gaye!","success");
+    toast("✅ "+staffList.length+" staff saved to Google Sheets!","success");
   });
 });
 
@@ -406,7 +406,7 @@ document.getElementById("excelUpload").addEventListener("change",function(e){
     var wb=XLSX.read(data,{type:"array"});
     var ws=wb.Sheets[wb.SheetNames[0]];
     var rows=XLSX.utils.sheet_to_json(ws,{defval:""});
-    if(!rows.length){toast("Excel empty hai");return;}
+    if(!rows.length){toast("Excel file is empty");return;}
     var clean=[];
     for(var i=0;i<rows.length;i++){
       var r=rows[i];
@@ -416,16 +416,16 @@ document.getElementById("excelUpload").addEventListener("change",function(e){
       var role=(r["Role"]||r["role"]||"").toString().trim();
       if(id&&name)clean.push({id:id,name:name,dept:dept,role:role});
     }
-    if(!clean.length){toast("Valid rows nahi mili");return;}
+    if(!clean.length){toast("No valid rows found");return;}
     parsedExcelRows=clean;
     var html='<div style="margin-bottom:6px;color:var(--text2)">📋 '+parsedExcelRows.length+' records found</div><div style="max-height:140px;overflow-y:auto;">';
     parsedExcelRows.forEach(function(r){
       var dup=staffList.some(function(s){return s.id===r.id;});
       html+='<div style="padding:2px 0;font-size:10px;color:'+(dup?"var(--warn)":"var(--text2)")+'">'+esc(r.id)+' | '+esc(r.name)+(dup?" ⚠️ DUP":"")+'</div>';
     });
-    html+='</div><div style="margin-top:6px;font-size:10px;color:var(--accent)">BULK ADD click karo import karne ke liye.</div>';
+    html+='</div><div style="margin-top:6px;font-size:10px;color:var(--accent)">Click BULK ADD to import.</div>';
     document.getElementById("previewTable").innerHTML=html;
-    toast(parsedExcelRows.length+" rows load. BULK ADD karo.","success");
+    toast(parsedExcelRows.length+" rows ready. Click BULK ADD.","success");
   };
   reader.readAsArrayBuffer(file);
 });
@@ -499,7 +499,7 @@ function filterGateList(){
   var q=document.getElementById("gate-search").value.toLowerCase();
   var el=document.getElementById("gate-list");
   if(!gateData.list.length){
-    el.innerHTML='<div style="text-align:center;padding:20px;color:var(--text2);">Pehle list load karo</div>';return;
+    el.innerHTML='<div style="text-align:center;padding:20px;color:var(--text2);">Load the list first</div>';return;
   }
   var filtered=q?gateData.list.filter(function(s){
     return s.name.toLowerCase().indexOf(q)>=0||s.id.toLowerCase().indexOf(q)>=0;
