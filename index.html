@@ -242,7 +242,7 @@ function toast(msg, type) {
 
 // Test connection function - ise click karke test karein
 window.testConnection = function() {
-    if (!API_URL || API_URL === "YOUR_APPS_SCRIPT_WEB_APP_URL_HERE") {
+    if (!API_URL || API_URL === "https://script.google.com/macros/s/AKfycbxT1G4cYLwJHH6wa7rg2Q7vdZVCUPL88kHJjwZlyQe3r021EeOnRjgvb68-eAR91KE1EA/exec") {
         toast("❌ Please set your Apps Script URL in the code (API_URL variable)", "err");
         document.getElementById("api-status").innerHTML = "⚠️ Set API URL first";
         return;
