@@ -223,7 +223,7 @@ label{font-size:11px;color:var(--text2);margin-bottom:5px;display:block;font-fam
 
 <script>
 // ==================== 🔴 IMPORTANT: YAHAN APNI URL DAALEIN 🔴 ====================
-const API_URL = "https://script.google.com/macros/s/AKfycbysRMBEy_eMApP7Cwc1AXZ_jP0oPAHWJaT_LAH5UB3Dp6lYbbUvXSo5mHWvoJ5fG9mwiQ/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbxT1G4cYLwJHH6wa7rg2Q7vdZVCUPL88kHJjwZlyQe3r021EeOnRjgvb68-eAR91KE1EA/exec";
 // Example: "https://script.google.com/macros/s/AKfycbz.../exec"
 // ============================================================================
 
@@ -278,7 +278,7 @@ window.testConnection = function() {
 };
 
 function apiCall(body, onSuccess, onError) {
-    if (!API_URL || API_URL === "YOUR_APPS_SCRIPT_WEB_APP_URL_HERE") {
+    if (!API_URL || API_URL === "https://script.google.com/macros/s/AKfycbxT1G4cYLwJHH6wa7rg2Q7vdZVCUPL88kHJjwZlyQe3r021EeOnRjgvb68-eAR91KE1EA/exec") {
         toast("❌ Please set your Google Apps Script URL in the code (API_URL line)", "err");
         if (onError) onError({ message: "API_URL not set" });
         return;
