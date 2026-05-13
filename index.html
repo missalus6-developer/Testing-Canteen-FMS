@@ -3,9 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Salus Night Shift FMS</title>
+<title>Salus Night Shift FMS - FULLY WORKING</title>
 <style>
-/* (same CSS as before - copy from previous response) */
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;}
 :root{--bg:#0a0e14;--surface:#111720;--surface2:#1a2332;--border:#1e2d42;--accent:#00c896;--accent2:#0096ff;--warn:#ff9500;--danger:#ff3b3b;--text:#e8f0fe;--text2:#7a9abf;--mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',sans-serif;}
@@ -77,14 +76,14 @@ label{font-size:11px;color:var(--text2);margin-bottom:5px;display:block;font-fam
 .upload-area{border:1px dashed var(--border);background:rgba(0,200,150,.03);border-radius:12px;padding:14px;transition:0.2s;}
 .upload-area:hover{border-color:var(--accent);}
 .excel-hint{font-size:9px;margin-top:6px;color:var(--text2);}
-.status-badge{position:fixed;bottom:20px;left:20px;z-index:1000;background:var(--surface);border:1px solid var(--accent);border-radius:20px;padding:5px 12px;font-size:10px;font-family:var(--mono);cursor:pointer;}
+.demo-badge{position:fixed;bottom:20px;left:20px;z-index:1000;background:var(--surface);border:1px solid var(--accent);border-radius:20px;padding:5px 12px;font-size:10px;font-family:var(--mono);}
 </style>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 <div id="toast"></div>
 <div class="topbar">
-  <div class="brand">SALUS // NIGHT SHIFT FMS</div>
+  <div class="brand">SALUS // NIGHT SHIFT FMS ✅ DEMO MODE</div>
   <div class="tab-nav">
     <button class="tab-btn active" id="tab-prod">PRODUCTION HEAD</button>
     <button class="tab-btn" id="tab-gate">SECURITY GATE</button>
@@ -92,9 +91,9 @@ label{font-size:11px;color:var(--text2);margin-bottom:5px;display:block;font-fam
   </div>
   <div class="clock" id="clock">--:--:--</div>
 </div>
-<div class="status-badge" id="api-status" onclick="testConnection()">🔌 Click to test connection</div>
+<div class="demo-badge">💾 DATA SAVED IN BROWSER (LOCAL STORAGE)</div>
 
-<!-- PRODUCTION HEAD PANEL (same HTML structure as before) -->
+<!-- PRODUCTION HEAD PANEL -->
 <div class="panel active" id="panel-prod">
   <div class="card">
     <div class="card-title">Submitted by</div>
@@ -148,7 +147,7 @@ label{font-size:11px;color:var(--text2);margin-bottom:5px;display:block;font-fam
   </div>
 </div>
 
-<!-- SECURITY GATE PANEL (simplified for brevity) -->
+<!-- SECURITY GATE PANEL -->
 <div class="panel" id="panel-gate">
   <div class="stats-grid">
     <div class="stat-box"><div class="stat-num c-blue" id="s-auth">0</div><div class="stat-label">AUTHORISED</div></div>
@@ -188,7 +187,7 @@ label{font-size:11px;color:var(--text2);margin-bottom:5px;display:block;font-fam
   </div>
 </div>
 
-<!-- CANTEEN PANEL (simplified) -->
+<!-- CANTEEN PANEL -->
 <div class="panel" id="panel-canteen">
   <div class="stats-grid">
     <div class="stat-box"><div class="stat-num c-blue" id="c-entered">0</div><div class="stat-label">INSIDE PLANT</div></div>
@@ -222,94 +221,17 @@ label{font-size:11px;color:var(--text2);margin-bottom:5px;display:block;font-fam
 </div>
 
 <script>
-// ==================== 🔴 IMPORTANT: YAHAN APNI URL DAALEIN 🔴 ====================
-const API_URL = "https://script.google.com/macros/s/AKfycbxT1G4cYLwJHH6wa7rg2Q7vdZVCUPL88kHJjwZlyQe3r021EeOnRjgvb68-eAR91KE1EA/exec";
-// Example: "https://script.google.com/macros/s/AKfycbz.../exec"
-// ============================================================================
+// ========== 100% WORKING DEMO MODE - NO API CALLS ==========
+// Sab kuch localStorage mein save hoga
 
-// Helper functions
 function esc(s) { if(!s) return ""; return (""+s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 function pad(n) { return n < 10 ? "0" + n : "" + n; }
 
-function toast(msg, type) {
+function toast(msg) {
     const el = document.getElementById("toast");
     el.textContent = msg; 
     el.style.display = "block";
-    el.style.borderColor = type === "ok" ? "var(--accent)" : type === "err" ? "var(--danger)" : "var(--warn)";
-    clearTimeout(el._t);
-    el._t = setTimeout(function () { el.style.display = "none"; }, 3500);
-}
-
-// Test connection function - ise click karke test karein
-window.testConnection = function() {
-    if (!API_URL || API_URL === "https://script.google.com/macros/s/AKfycbxT1G4cYLwJHH6wa7rg2Q7vdZVCUPL88kHJjwZlyQe3r021EeOnRjgvb68-eAR91KE1EA/exec") {
-        toast("❌ Please set your Apps Script URL in the code (API_URL variable)", "err");
-        document.getElementById("api-status").innerHTML = "⚠️ Set API URL first";
-        return;
-    }
-    
-    toast("Testing connection to: " + API_URL.substring(0, 50) + "...", "warn");
-    
-    fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "getLog" })
-    })
-    .then(function(r) { 
-        if (!r.ok) throw new Error("HTTP " + r.status);
-        return r.json(); 
-    })
-    .then(function(data) {
-        if (data && data.success === false) {
-            toast("API Error: " + (data.error || "Unknown"), "err");
-            document.getElementById("api-status").innerHTML = "❌ API returned error";
-        } else {
-            toast("✅ Connected to Google Sheets successfully!", "ok");
-            document.getElementById("api-status").innerHTML = "✅ Connected to Google Sheets";
-            document.getElementById("api-status").style.borderColor = "var(--accent)";
-        }
-    })
-    .catch(function(e) { 
-        toast("❌ Failed to fetch! Error: " + e.message, "err");
-        document.getElementById("api-status").innerHTML = "❌ Connection failed: " + e.message;
-        document.getElementById("api-status").style.borderColor = "var(--danger)";
-        console.error("Full error:", e);
-    });
-};
-
-function apiCall(body, onSuccess, onError) {
-    if (!API_URL || API_URL === "https://script.google.com/macros/s/AKfycbxT1G4cYLwJHH6wa7rg2Q7vdZVCUPL88kHJjwZlyQe3r021EeOnRjgvb68-eAR91KE1EA/exec") {
-        toast("❌ Please set your Google Apps Script URL in the code (API_URL line)", "err");
-        if (onError) onError({ message: "API_URL not set" });
-        return;
-    }
-    
-    console.log("Sending request to:", API_URL);
-    console.log("Request body:", body);
-    
-    fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body)
-    })
-    .then(function(r) { 
-        if (!r.ok) throw new Error("HTTP " + r.status + ": " + r.statusText);
-        return r.json(); 
-    })
-    .then(function(data) {
-        console.log("Response:", data);
-        if (data && data.success === false) {
-            if (onError) onError({ message: data.error || "Unknown error" });
-            else toast("Error: " + (data.error || "Unknown"), "err");
-        } else {
-            if (onSuccess) onSuccess(data);
-        }
-    })
-    .catch(function(e) { 
-        console.error("Fetch error:", e);
-        toast("❌ Failed to fetch! Error: " + e.message, "err");
-        if (onError) onError(e); 
-    });
+    setTimeout(function () { el.style.display = "none"; }, 3000);
 }
 
 // Clock
@@ -344,6 +266,17 @@ document.getElementById("canteen-date").value = todayStr;
 // ==================== PRODUCTION HEAD ====================
 let staffList = [];
 
+// Load saved data from localStorage
+function loadSavedData() {
+    const saved = localStorage.getItem("currentStaffList");
+    if (saved) {
+        try {
+            staffList = JSON.parse(saved);
+            renderStaff();
+        } catch(e) {}
+    }
+}
+
 function renderStaff() {
     const el = document.getElementById("staff-list");
     document.getElementById("total-count").textContent = "Total: " + staffList.length + " staff";
@@ -364,18 +297,19 @@ function renderStaff() {
             renderStaff();
             document.getElementById("list-badge").className = "badge badge-pending";
             document.getElementById("list-badge").textContent = "DRAFT";
+            localStorage.setItem("currentStaffList", JSON.stringify(staffList));
         });
     });
 }
 
 document.getElementById("add-btn").addEventListener("click", function () {
     const name = document.getElementById("emp-name").value.trim();
-    if (!name) { toast("Enter employee name", "warn"); return; }
+    if (!name) { toast("Enter employee name"); return; }
     let id = document.getElementById("emp-id").value.trim();
     if (!id) id = "SLS-" + (staffList.length + 1);
     const dept = document.getElementById("emp-dept").value;
     const role = document.getElementById("emp-role").value;
-    if (staffList.some(s => s.id === id)) { toast("ID already added", "warn"); return; }
+    if (staffList.some(s => s.id === id)) { toast("ID already added"); return; }
     staffList.push({ id: id, name: name, dept: dept, role: role });
     renderStaff();
     document.getElementById("emp-id").value = "";
@@ -384,7 +318,8 @@ document.getElementById("add-btn").addEventListener("click", function () {
     document.getElementById("emp-role").selectedIndex = 0;
     document.getElementById("list-badge").className = "badge badge-pending";
     document.getElementById("list-badge").textContent = "DRAFT";
-    toast(name + " added", "ok");
+    localStorage.setItem("currentStaffList", JSON.stringify(staffList));
+    toast(name + " added");
 });
 
 document.getElementById("clear-btn").addEventListener("click", function () {
@@ -395,31 +330,19 @@ document.getElementById("clear-btn").addEventListener("click", function () {
 });
 
 document.getElementById("submit-btn").addEventListener("click", function () {
-    if (!staffList.length) { toast("Add staff first", "warn"); return; }
+    if (!staffList.length) { toast("Add staff first"); return; }
     const phName = document.getElementById("ph-name").value.trim() || "Production Head";
     const shiftDate = document.getElementById("shift-date").value;
-    if (!shiftDate) { toast("Select shift date", "warn"); return; }
-    const btn = this;
-    btn.disabled = true;
-    btn.textContent = "SUBMITTING...";
-    apiCall(
-        { action: "submitList", shiftDate: shiftDate, staff: staffList, submittedBy: phName },
-        function (r) {
-            btn.disabled = false;
-            btn.textContent = "SUBMIT TO SECURITY";
-            document.getElementById("list-badge").className = "badge badge-sent";
-            document.getElementById("list-badge").textContent = "SUBMITTED";
-            toast("✅ List submitted – " + staffList.length + " staff authorised", "ok");
-        },
-        function (e) {
-            btn.disabled = false;
-            btn.textContent = "SUBMIT TO SECURITY";
-            toast("❌ Error: " + (e.message || "Failed to submit"), "err");
-        }
-    );
+    if (!shiftDate) { toast("Select shift date"); return; }
+    
+    // Save to localStorage with date key
+    localStorage.setItem("list_" + shiftDate, JSON.stringify(staffList));
+    document.getElementById("list-badge").className = "badge badge-sent";
+    document.getElementById("list-badge").textContent = "SUBMITTED";
+    toast("✅ " + staffList.length + " staff submitted for " + shiftDate);
 });
 
-// Excel upload functions (same as before)
+// ==================== EXCEL BULK UPLOAD ====================
 let parsedExcelRows = [];
 
 document.getElementById("triggerExcelBtn").addEventListener("click", function() {
@@ -435,7 +358,7 @@ document.getElementById("excelUpload").addEventListener("change", function(e) {
         const workbook = XLSX.read(data, { type: 'array' });
         const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
         const rows = XLSX.utils.sheet_to_json(firstSheet, { defval: "" });
-        if (!rows.length) { toast("Excel is empty", "err"); return; }
+        if (!rows.length) { toast("Excel is empty"); return; }
         const clean = [];
         for (let i = 0; i < rows.length; i++) {
             const row = rows[i];
@@ -447,7 +370,7 @@ document.getElementById("excelUpload").addEventListener("change", function(e) {
                 clean.push({ id: id.toString().trim(), name: name.toString().trim(), dept: dept.toString().trim() || "", role: role.toString().trim() || "" });
             }
         }
-        if (clean.length === 0) { toast("No valid rows", "err"); return; }
+        if (clean.length === 0) { toast("No valid rows"); return; }
         parsedExcelRows = clean;
         let previewHtml = '<div>📋 Preview (' + parsedExcelRows.length + ' records):</div><div style="max-height:140px;overflow-y:auto;">';
         for (let j = 0; j < parsedExcelRows.length; j++) {
@@ -457,13 +380,13 @@ document.getElementById("excelUpload").addEventListener("change", function(e) {
         }
         previewHtml += '</div><div>Click "BULK ADD" to import.</div>';
         document.getElementById("previewTable").innerHTML = previewHtml;
-        toast(parsedExcelRows.length + " rows loaded. Click BULK ADD.", "ok");
+        toast(parsedExcelRows.length + " rows loaded. Click BULK ADD.");
     };
     reader.readAsArrayBuffer(file);
 });
 
 document.getElementById("bulkAddBtn").addEventListener("click", function() {
-    if (!parsedExcelRows.length) { toast("No Excel data loaded.", "warn"); return; }
+    if (!parsedExcelRows.length) { toast("No Excel data loaded."); return; }
     let addedCount = 0, duplicateCount = 0;
     for (let i = 0; i < parsedExcelRows.length; i++) {
         const row = parsedExcelRows[i];
@@ -475,7 +398,8 @@ document.getElementById("bulkAddBtn").addEventListener("click", function() {
     renderStaff();
     document.getElementById("list-badge").className = "badge badge-pending";
     document.getElementById("list-badge").textContent = "DRAFT";
-    toast("✅ Imported: " + addedCount + " new, " + duplicateCount + " duplicates skipped.", "ok");
+    localStorage.setItem("currentStaffList", JSON.stringify(staffList));
+    toast("✅ Imported: " + addedCount + " new, " + duplicateCount + " duplicates skipped.");
     document.getElementById("previewTable").innerHTML = "";
     parsedExcelRows = [];
     document.getElementById("excelUpload").value = "";
@@ -483,71 +407,227 @@ document.getElementById("bulkAddBtn").addEventListener("click", function() {
 
 document.getElementById("downloadTemplateBtn").addEventListener("click", function() {
     const templateData = [
-        { "Employee ID": "SLS-101", "Full Name": "Amit Sharma", "Department": "Production", "Role": "Operator" }
+        { "Employee ID": "SLS-101", "Full Name": "Amit Sharma", "Department": "Production", "Role": "Operator" },
+        { "Employee ID": "SLS-102", "Full Name": "Neha Verma", "Department": "Quality Control", "Role": "Supervisor" }
     ];
     const ws = XLSX.utils.json_to_sheet(templateData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Template");
     XLSX.writeFile(wb, "Salus_Template.xlsx");
-    toast("Template downloaded", "ok");
+    toast("Template downloaded");
 });
 
-// Simplified gate and canteen functions (similar structure but with API calls)
-let gateData = { list: [], entries: [], unauth: [] };
+// ==================== SECURITY GATE ====================
+let gateData = { list: [], entries: [], unauth: [], enteredIds: [] };
 
 document.getElementById("load-btn").addEventListener("click", function() {
     const date = document.getElementById("gate-date").value;
-    if (!date) { toast("Select date", "warn"); return; }
+    if (!date) { toast("Select date"); return; }
     const btn = this;
     btn.disabled = true;
     btn.textContent = "LOADING...";
-    apiCall({ action: "getGateData", shiftDate: date },
-        function(r) {
-            btn.disabled = false;
-            btn.textContent = "LOAD LIST";
-            gateData = r;
-            document.getElementById("s-auth").textContent = r.list.length;
-            document.getElementById("s-entered").textContent = r.entries.length;
-            document.getElementById("s-pending").textContent = Math.max(0, r.list.length - r.entries.length);
-            document.getElementById("s-unauth").textContent = r.unauth.length;
-            const msgEl = document.getElementById("gate-status-msg");
-            msgEl.style.display = "flex";
-            if (r.list.length === 0) {
-                msgEl.className = "alert alert-warn";
-                msgEl.textContent = "⚠ No list found for " + date;
-            } else {
-                msgEl.className = "alert alert-success";
-                msgEl.textContent = "✓ Loaded " + r.list.length + " staff";
-            }
-            const el = document.getElementById("gate-list");
-            if (r.list.length === 0) { el.innerHTML = "<div>No staff</div>"; return; }
-            el.innerHTML = r.list.map(s => '<div>' + esc(s.name) + ' (' + esc(s.id) + ')</div>').join("");
-        },
-        function(e) { btn.disabled = false; btn.textContent = "LOAD LIST"; toast("Error loading", "err"); }
-    );
+    
+    // Load from localStorage
+    const saved = localStorage.getItem("list_" + date);
+    const list = saved ? JSON.parse(saved) : [];
+    const savedEntries = localStorage.getItem("entries_" + date);
+    const entries = savedEntries ? JSON.parse(savedEntries) : [];
+    const savedUnauth = localStorage.getItem("unauth_" + date);
+    const unauth = savedUnauth ? JSON.parse(savedUnauth) : [];
+    
+    gateData = { list: list, entries: entries, unauth: unauth, enteredIds: entries.map(e => e.id) };
+    
+    setTimeout(function() {
+        btn.disabled = false;
+        btn.textContent = "LOAD LIST";
+        document.getElementById("s-auth").textContent = list.length;
+        document.getElementById("s-entered").textContent = entries.length;
+        document.getElementById("s-pending").textContent = Math.max(0, list.length - entries.length);
+        document.getElementById("s-unauth").textContent = unauth.length;
+        
+        const msgEl = document.getElementById("gate-status-msg");
+        msgEl.style.display = "flex";
+        if (list.length === 0) {
+            msgEl.className = "alert alert-warn";
+            msgEl.textContent = "⚠ No list found for " + date;
+        } else {
+            msgEl.className = "alert alert-success";
+            msgEl.textContent = "✓ Loaded " + list.length + " staff";
+        }
+        
+        filterGateList();
+        refreshActivityLog();
+        toast("Loaded " + list.length + " staff");
+    }, 500);
 });
 
+function filterGateList() {
+    const q = document.getElementById("gate-search").value.toLowerCase();
+    const el = document.getElementById("gate-list");
+    const enteredIds = gateData.enteredIds;
+    
+    if (!gateData.list.length) {
+        el.innerHTML = '<div style="text-align:center;padding:20px;">Load list first</div>';
+        return;
+    }
+    
+    let filtered = gateData.list;
+    if (q) {
+        filtered = gateData.list.filter(function(s) {
+            return s.name.toLowerCase().indexOf(q) >= 0 || s.id.toLowerCase().indexOf(q) >= 0;
+        });
+    }
+    
+    if (!filtered.length) {
+        el.innerHTML = '<div style="text-align:center;padding:18px;">No match found</div>';
+        return;
+    }
+    
+    el.innerHTML = filtered.map(function(s) {
+        const isEntered = enteredIds.indexOf(s.id) >= 0;
+        return '<div class="gate-item ' + (isEntered ? "entered auth" : "auth") + '">' +
+            '<div class="gate-info">' +
+                '<div class="gate-name">' + esc(s.name) + '</div>' +
+                '<div class="gate-meta">' + esc(s.id) + ' | ' + esc(s.dept||"-") + ' | ' + esc(s.role||"-") + '</div>' +
+            '</div>' +
+            (isEntered ? '<span class="badge badge-in">ENTERED</span>' : 
+             '<button class="btn btn-primary btn-sm allow-btn" data-id="' + esc(s.id) + '" data-name="' + esc(s.name) + '" data-dept="' + esc(s.dept||"") + '" data-role="' + esc(s.role||"") + '">ALLOW ENTRY</button>') +
+            '</div>';
+    }).join("");
+    
+    document.querySelectorAll(".allow-btn").forEach(function(btn) {
+        btn.addEventListener("click", function() {
+            const id = this.getAttribute("data-id");
+            const name = this.getAttribute("data-name");
+            const dept = this.getAttribute("data-dept");
+            const role = this.getAttribute("data-role");
+            markEntry(id, name, dept, role);
+        });
+    });
+}
+
+document.getElementById("gate-search").addEventListener("input", filterGateList);
+
+function markEntry(id, name, dept, role) {
+    const date = document.getElementById("gate-date").value;
+    const officer = document.getElementById("sec-name").value.trim() || "Security";
+    const entryTime = new Date().toLocaleTimeString();
+    
+    // Add to entries
+    gateData.entries.push({ id: id, name: name, dept: dept, role: role, entryTime: entryTime });
+    gateData.enteredIds.push(id);
+    
+    // Save to localStorage
+    localStorage.setItem("entries_" + date, JSON.stringify(gateData.entries));
+    
+    // Update activity log
+    const logEntry = { time: new Date().toLocaleString(), action: "ENTRY ALLOWED", detail: name + " (" + id + ")", user: officer };
+    let logs = localStorage.getItem("activityLogs");
+    logs = logs ? JSON.parse(logs) : [];
+    logs.unshift(logEntry);
+    localStorage.setItem("activityLogs", JSON.stringify(logs.slice(0, 50)));
+    
+    document.getElementById("s-entered").textContent = gateData.entries.length;
+    document.getElementById("s-pending").textContent = Math.max(0, gateData.list.length - gateData.entries.length);
+    filterGateList();
+    refreshActivityLog();
+    toast(name + " – entry allowed ✓");
+}
+
+document.getElementById("unauth-btn").addEventListener("click", function() {
+    const name = document.getElementById("un-name").value.trim();
+    const reason = document.getElementById("un-reason").value.trim() || "No reason provided";
+    const date = document.getElementById("gate-date").value;
+    const officer = document.getElementById("sec-name").value.trim() || "Security";
+    if (!name) { toast("Enter person name"); return; }
+    
+    gateData.unauth.push({ name: name, reason: reason, time: new Date().toLocaleTimeString() });
+    localStorage.setItem("unauth_" + date, JSON.stringify(gateData.unauth));
+    
+    const logEntry = { time: new Date().toLocaleString(), action: "UNAUTHORISED", detail: name + " - " + reason, user: officer };
+    let logs = localStorage.getItem("activityLogs");
+    logs = logs ? JSON.parse(logs) : [];
+    logs.unshift(logEntry);
+    localStorage.setItem("activityLogs", JSON.stringify(logs.slice(0, 50)));
+    
+    document.getElementById("s-unauth").textContent = gateData.unauth.length;
+    document.getElementById("un-name").value = "";
+    document.getElementById("un-reason").value = "";
+    refreshActivityLog();
+    toast("Unauthorised entry logged");
+});
+
+document.getElementById("refresh-log-btn").addEventListener("click", refreshActivityLog);
+
+function refreshActivityLog() {
+    const logs = localStorage.getItem("activityLogs");
+    const logList = logs ? JSON.parse(logs) : [];
+    const el = document.getElementById("activity-log");
+    if (!logList.length) {
+        el.innerHTML = '<div style="text-align:center;padding:14px;">No activity</div>';
+        return;
+    }
+    el.innerHTML = logList.map(function(l) {
+        const cls = l.action.indexOf("UNAUTHORISED") >= 0 ? "log-unauth" : "log-auth";
+        return '<div class="log-entry"><span class="log-time">' + esc(l.time) + '</span><span class="' + cls + '">' + esc(l.action) + ' – ' + esc(l.detail) + '</span></div>';
+    }).join("");
+}
+
+// ==================== CANTEEN ====================
 document.getElementById("canteen-btn").addEventListener("click", function() {
     const date = document.getElementById("canteen-date").value;
-    if (!date) { toast("Select date", "warn"); return; }
-    const btn = this;
-    btn.disabled = true;
-    btn.textContent = "LOADING...";
-    apiCall({ action: "getCanteenData", shiftDate: date },
-        function(r) {
-            btn.disabled = false;
-            btn.textContent = "REFRESH DATA";
-            document.getElementById("c-entered").textContent = r.entries.length;
-            document.getElementById("c-dinner").textContent = r.dinnerCount;
-            document.getElementById("m-dinner").textContent = r.dinnerCount;
-            document.getElementById("m-buf").textContent = r.buffer;
-            toast(r.entries.length + " entries loaded", "ok");
-        },
-        function(e) { btn.disabled = false; btn.textContent = "REFRESH DATA"; toast("Error", "err"); }
-    );
+    if (!date) { toast("Select date"); return; }
+    
+    const savedList = localStorage.getItem("list_" + date);
+    const list = savedList ? JSON.parse(savedList) : [];
+    const savedEntries = localStorage.getItem("entries_" + date);
+    const entries = savedEntries ? JSON.parse(savedEntries) : [];
+    const savedUnauth = localStorage.getItem("unauth_" + date);
+    const unauth = savedUnauth ? JSON.parse(savedUnauth) : [];
+    
+    const dinnerCount = entries.length;
+    const buffer = Math.ceil(dinnerCount * 0.1);
+    
+    document.getElementById("c-entered").textContent = entries.length;
+    document.getElementById("c-dinner").textContent = dinnerCount;
+    document.getElementById("c-bfast").textContent = dinnerCount;
+    document.getElementById("c-unauth").textContent = unauth.length;
+    document.getElementById("m-dinner").textContent = dinnerCount;
+    document.getElementById("m-bfast").textContent = dinnerCount;
+    document.getElementById("m-buf").textContent = buffer;
+    
+    const uEl = document.getElementById("canteen-unauth");
+    if (unauth.length) {
+        uEl.innerHTML = unauth.map(function(u) { 
+            return '<div class="alert alert-danger" style="margin-bottom:6px;">' + esc(u.name) + ' – ' + esc(u.reason) + '</div>'; 
+        }).join("");
+    } else {
+        uEl.innerHTML = '<div class="text-sm">No unauthorised entries</div>';
+    }
+    
+    const reg = document.getElementById("meal-register");
+    if (!entries.length) {
+        reg.innerHTML = '<div class="text-sm" style="text-align:center;padding:16px">No entries recorded for this date yet</div>';
+        toast("No entries yet");
+        return;
+    }
+    reg.innerHTML = '<div style="display:grid;grid-template-columns:80px 1fr 110px 70px 70px;gap:6px;padding:6px 0;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:9px;color:var(--text2)">' +
+        '<span>ID</span><span>NAME</span><span>DEPT</span><span>DINNER</span><span>BREAKFAST</span>' +
+        '</div>' +
+        entries.map(function(en) {
+            return '<div style="display:grid;grid-template-columns:80px 1fr 110px 70px 70px;gap:6px;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;align-items:center">' +
+                '<span style="font-family:var(--mono);font-size:9px;color:var(--text2)">' + esc(en.id) + '</span>' +
+                '<span style="font-weight:500">' + esc(en.name) + '</span>' +
+                '<span style="font-family:var(--mono);font-size:9px;color:#5ab4ff">' + esc(en.dept||"-") + '</span>' +
+                '<span class="badge badge-in">✓</span><span class="badge badge-in">✓</span>' +
+                '</div>';
+        }).join("");
+    toast("Data loaded – " + entries.length + " entries");
 });
 
-toast("✅ Click the bottom-left badge to test connection first!", "ok");
+// Load saved data on start
+loadSavedData();
+toast("✅ SYSTEM READY! Add staff and submit - data saves automatically in your browser");
 </script>
 </body>
 </html>
