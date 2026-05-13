@@ -34,7 +34,6 @@ label{font-size:11px;color:var(--text2);margin-bottom:5px;display:block;font-fam
 .btn-sm{padding:5px 11px;font-size:10px;}
 .flex{display:flex;gap:8px;align-items:center;}
 .flex-end{justify-content:flex-end;}
-.flex-col{flex-direction:column;align-items:stretch;}
 .staff-item{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;display:flex;align-items:center;gap:10px;font-size:12px;margin-bottom:6px;flex-wrap:wrap;}
 .emp-id{font-family:var(--mono);font-size:10px;color:var(--text2);min-width:70px;}
 .emp-name{flex:1;font-weight:500;}
@@ -51,7 +50,7 @@ label{font-size:11px;color:var(--text2);margin-bottom:5px;display:block;font-fam
 .stat-num{font-family:var(--mono);font-size:22px;font-weight:600;margin-bottom:3px;}
 .stat-label{font-family:var(--mono);font-size:9px;color:var(--text2);letter-spacing:.06em;}
 .c-green{color:var(--accent);}.c-blue{color:var(--accent2);}.c-warn{color:var(--warn);}.c-red{color:var(--danger);}
-.gate-item{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:10px;margin-bottom:7px;flex-wrap:wrap;}
+.gate-item{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;flex-wrap:wrap;gap:10px;}
 .gate-item.auth{border-left:3px solid var(--accent);}
 .gate-item.entered{opacity:.5;}
 .gate-info{flex:1;}
@@ -70,7 +69,6 @@ label{font-size:11px;color:var(--text2);margin-bottom:5px;display:block;font-fam
 .divider{height:1px;background:var(--border);margin:14px 0;}
 .text-sm{font-size:11px;color:var(--text2);}
 .mt8{margin-top:8px;}
-.mb12{margin-bottom:12px;}
 #toast{position:fixed;bottom:24px;right:24px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 18px;font-family:var(--mono);font-size:11px;color:var(--text);z-index:999;display:none;max-width:300px;box-shadow:0 8px 32px rgba(0,0,0,.4);}
 .search-wrap{position:relative;margin-bottom:12px;}
 .search-wrap input{padding-left:34px;}
@@ -104,7 +102,7 @@ label{font-size:11px;color:var(--text2);margin-bottom:5px;display:block;font-fam
   </div>
   
   <div class="card">
-    <div class="card-title">📎 Bulk Excel Upload</div>
+    <div class="card-title">📎 Bulk Excel Upload (100-200 employees at once)</div>
     <div class="upload-area">
       <div class="flex" style="justify-content:space-between; flex-wrap:wrap; gap:8px;">
         <div>
@@ -112,9 +110,9 @@ label{font-size:11px;color:var(--text2);margin-bottom:5px;display:block;font-fam
           <button class="btn btn-primary btn-sm" id="triggerExcelBtn">📂 SELECT EXCEL FILE</button>
           <button class="btn btn-ghost btn-sm" id="downloadTemplateBtn">📄 DOWNLOAD TEMPLATE</button>
         </div>
-        <button class="btn btn-warn btn-sm" id="bulkAddBtn">➕ BULK ADD</button>
+        <button class="btn btn-warn btn-sm" id="bulkAddBtn">➕ BULK ADD (IMPORT ALL)</button>
       </div>
-      <div class="excel-hint">Required columns: <strong>Employee ID, Full Name, Department, Role</strong></div>
+      <div class="excel-hint">✅ Required columns: <strong>Employee ID, Full Name, Department, Role</strong> - Upload once, preview, then bulk import</div>
       <div id="previewTable" style="margin-top:12px; max-height:200px; overflow-y:auto; font-size:11px;"></div>
     </div>
   </div>
@@ -147,7 +145,7 @@ label{font-size:11px;color:var(--text2);margin-bottom:5px;display:block;font-fam
   </div>
 </div>
 
-<!-- SECURITY GATE PANEL -->
+<!-- SECURITY GATE PANEL - FULLY WORKING -->
 <div class="panel" id="panel-gate">
   <div class="stats-grid">
     <div class="stat-box"><div class="stat-num c-blue" id="s-auth">0</div><div class="stat-label">AUTHORISED</div></div>
@@ -170,7 +168,7 @@ label{font-size:11px;color:var(--text2);margin-bottom:5px;display:block;font-fam
       <span class="search-icon">🔍</span>
       <input id="gate-search" type="text" placeholder="Search by name or Employee ID...">
     </div>
-    <div id="gate-list"><div style="text-align:center;padding:20px;font-family:var(--mono);font-size:11px;color:var(--text2)">Load list first</div></div>
+    <div id="gate-list"><div style="text-align:center;padding:20px;">Load list first</div></div>
   </div>
   <div class="card">
     <div class="card-title">Log unauthorised entry</div>
@@ -182,14 +180,12 @@ label{font-size:11px;color:var(--text2);margin-bottom:5px;display:block;font-fam
   </div>
   <div class="card">
     <div class="card-title">Activity log</div>
-    <div id="activity-log" style="max-height:200px;overflow-y:auto;">
-      <div style="text-align:center;padding:16px;font-family:var(--mono);font-size:10px;color:var(--text2)">No activity</div>
-    </div>
+    <div id="activity-log" style="max-height:200px;overflow-y:auto;"></div>
     <button class="btn btn-ghost btn-sm mt8" id="refresh-log-btn">REFRESH LOG</button>
   </div>
 </div>
 
-<!-- CANTEEN PANEL -->
+<!-- CANTEEN PANEL - FULLY WORKING -->
 <div class="panel" id="panel-canteen">
   <div class="stats-grid">
     <div class="stat-box"><div class="stat-num c-blue" id="c-entered">0</div><div class="stat-label">INSIDE PLANT</div></div>
@@ -227,12 +223,13 @@ label{font-size:11px;color:var(--text2);margin-bottom:5px;display:block;font-fam
 var API_URL = "https://script.google.com/macros/s/AKfycbzuy0D5eKw9qIA7R75LzHMbe0JXpNo5L7js9ybZ-ENyJIj-Yem9z44KvrFU3XwGcUfX/exec";
 
 // ==================== HELPER FUNCTIONS ====================
-function esc(s) { return (""+s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function esc(s) { if(!s) return ""; return (""+s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 function pad(n) { return n < 10 ? "0" + n : "" + n; }
 
 function toast(msg, type) {
   var el = document.getElementById("toast");
-  el.textContent = msg; el.style.display = "block";
+  el.textContent = msg; 
+  el.style.display = "block";
   el.style.borderColor = type === "ok" ? "var(--accent)" : type === "err" ? "var(--danger)" : "var(--warn)";
   clearTimeout(el._t);
   el._t = setTimeout(function () { el.style.display = "none"; }, 3500);
@@ -293,8 +290,8 @@ function renderStaff() {
     return '<div class="staff-item">' +
       '<span class="emp-id">' + esc(s.id) + '</span>' +
       '<span class="emp-name">' + esc(s.name) + '</span>' +
-      '<span class="emp-tag tag-dept">' + (s.dept || "-") + '</span>' +
-      '<span class="emp-tag tag-role">' + (s.role || "-") + '</span>' +
+      '<span class="emp-tag tag-dept">' + esc(s.dept || "-") + '</span>' +
+      '<span class="emp-tag tag-role">' + esc(s.role || "-") + '</span>' +
       '<button class="del-btn" data-idx="' + i + '">✕</button>' +
       '</div>';
   }).join("");
@@ -479,10 +476,10 @@ document.getElementById("load-btn").addEventListener("click", function() {
       gateData = r;
       if (r.list.length === 0) {
         msgEl.className = "alert alert-warn";
-        msgEl.textContent = "⚠ No authorised list found for " + date + ". Ask Production Head to submit.";
+        msgEl.textContent = "⚠ No authorised list found for " + date;
       } else {
         msgEl.className = "alert alert-success";
-        msgEl.textContent = "✓ List loaded – " + r.list.length + " authorised staff.";
+        msgEl.textContent = "✓ Loaded " + r.list.length + " authorised staff";
       }
       updateGateStats();
       filterGateList();
@@ -492,11 +489,178 @@ document.getElementById("load-btn").addEventListener("click", function() {
       btn.disabled = false;
       btn.textContent = "LOAD LIST";
       msgEl.style.display = "none";
-      toast("Error loading list: " + (e.message || "Unknown"), "err");
+      toast("Error: " + (e.message || "Failed"), "err");
     }
   );
 });
 
 function updateGateStats() {
   document.getElementById("s-auth").textContent = gateData.list.length;
-  document.getElementById("s-entered").textContent = gateData.entries.length
+  document.getElementById("s-entered").textContent = gateData.entries.length;
+  document.getElementById("s-pending").textContent = Math.max(0, gateData.list.length - gateData.entries.length);
+  document.getElementById("s-unauth").textContent = gateData.unauth.length;
+}
+
+document.getElementById("gate-search").addEventListener("input", filterGateList);
+
+function filterGateList() {
+  var q = document.getElementById("gate-search").value.toLowerCase();
+  var el = document.getElementById("gate-list");
+  var enteredIds = gateData.entries.map(function(e) { return e.id; });
+  
+  if (!gateData.list.length) {
+    el.innerHTML = '<div style="text-align:center;padding:20px;">Load list first</div>';
+    return;
+  }
+  var filtered = gateData.list.filter(function(s) {
+    return !q || s.name.toLowerCase().indexOf(q) >= 0 || s.id.toLowerCase().indexOf(q) >= 0;
+  });
+  if (!filtered.length) {
+    el.innerHTML = '<div style="text-align:center;padding:18px;">No match found</div>';
+    return;
+  }
+  el.innerHTML = filtered.map(function(s) {
+    var isEntered = enteredIds.indexOf(s.id) >= 0;
+    var entryTime = "";
+    if(isEntered) {
+      var entry = gateData.entries.find(function(e) { return e.id === s.id; });
+      entryTime = entry ? entry.entryTime : "";
+    }
+    return '<div class="gate-item ' + (isEntered ? "entered auth" : "auth") + '">' +
+      '<div class="gate-info">' +
+        '<div class="gate-name">' + esc(s.name) + '</div>' +
+        '<div class="gate-meta">' + esc(s.id) + ' | ' + esc(s.dept||"-") + ' | ' + esc(s.role||"-") + (isEntered ? ' | Entered: ' + entryTime : '') + '</div>' +
+      '</div>' +
+      (isEntered ? '<span class="badge badge-in">ENTERED</span>' : 
+       '<button class="btn btn-primary btn-sm allow-btn" data-id="' + esc(s.id) + '" data-name="' + esc(s.name) + '" data-dept="' + esc(s.dept||"") + '" data-role="' + esc(s.role||"") + '">ALLOW ENTRY</button>') +
+      '</div>';
+  }).join("");
+  
+  el.querySelectorAll(".allow-btn").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      var id = this.getAttribute("data-id");
+      var name = this.getAttribute("data-name");
+      var dept = this.getAttribute("data-dept");
+      var role = this.getAttribute("data-role");
+      markEntry(id, name, dept, role);
+    });
+  });
+}
+
+function markEntry(id, name, dept, role) {
+  var date = document.getElementById("gate-date").value;
+  var officer = document.getElementById("sec-name").value.trim() || "Security";
+  toast("Marking entry for " + name + "...", "warn");
+  
+  apiCall(
+    { action: "markEntry", shiftDate: date, empId: id, name: name, dept: dept, role: role, markedBy: officer },
+    function(r) {
+      gateData.entries.push({ id: id, name: name, dept: dept, role: role, entryTime: r.entryTime });
+      updateGateStats();
+      filterGateList();
+      refreshActivityLog();
+      toast(name + " – entry allowed ✓", "ok");
+    },
+    function(e) { toast("Error marking entry: " + (e.message || "Unknown"), "err"); }
+  );
+}
+
+document.getElementById("unauth-btn").addEventListener("click", function() {
+  var name = document.getElementById("un-name").value.trim();
+  var reason = document.getElementById("un-reason").value.trim() || "No reason provided";
+  var date = document.getElementById("gate-date").value;
+  var officer = document.getElementById("sec-name").value.trim() || "Security";
+  if (!name) { toast("Enter person name", "warn"); return; }
+  
+  apiCall(
+    { action: "logUnauth", shiftDate: date, personName: name, reason: reason, loggedBy: officer },
+    function(r) {
+      gateData.unauth.push({ name: name, reason: reason, time: r.loggedAt });
+      updateGateStats();
+      refreshActivityLog();
+      document.getElementById("un-name").value = "";
+      document.getElementById("un-reason").value = "";
+      toast("Unauthorised entry logged", "warn");
+    },
+    function(e) { toast("Error: " + (e.message || "Unknown"), "err"); }
+  );
+});
+
+document.getElementById("refresh-log-btn").addEventListener("click", refreshActivityLog);
+
+function refreshActivityLog() {
+  apiCall({ action: "getLog" }, function(r) {
+    var logs = r.logs || [];
+    var el = document.getElementById("activity-log");
+    if (!logs.length) {
+      el.innerHTML = '<div style="text-align:center;padding:14px;">No activity</div>';
+      return;
+    }
+    el.innerHTML = logs.map(function(l) {
+      var cls = l.action.indexOf("UNAUTH") >= 0 ? "log-unauth" : "log-auth";
+      return '<div class="log-entry"><span class="log-time">' + esc(l.time) + '</span><span class="' + cls + '">' + esc(l.action) + ' – ' + esc(l.detail) + '</span></div>';
+    }).join("");
+  });
+}
+
+// ==================== CANTEEN ====================
+document.getElementById("canteen-btn").addEventListener("click", function() {
+  var date = document.getElementById("canteen-date").value;
+  if (!date) { toast("Select date", "warn"); return; }
+  var btn = this;
+  btn.disabled = true;
+  btn.textContent = "LOADING...";
+  
+  apiCall(
+    { action: "getCanteenData", shiftDate: date },
+    function(r) {
+      btn.disabled = false;
+      btn.textContent = "REFRESH DATA";
+      document.getElementById("c-entered").textContent = r.entries.length;
+      document.getElementById("c-dinner").textContent = r.dinnerCount;
+      document.getElementById("c-bfast").textContent = r.breakfastCount || r.dinnerCount;
+      document.getElementById("c-unauth").textContent = r.unauthCount;
+      document.getElementById("m-dinner").textContent = r.dinnerCount;
+      document.getElementById("m-bfast").textContent = r.breakfastCount || r.dinnerCount;
+      document.getElementById("m-buf").textContent = r.buffer;
+      
+      var uEl = document.getElementById("canteen-unauth");
+      if (r.unauth && r.unauth.length) {
+        uEl.innerHTML = r.unauth.map(function(u) { 
+          return '<div class="alert alert-danger" style="margin-bottom:6px;">' + esc(u.name) + ' – ' + esc(u.reason) + '</div>'; 
+        }).join("");
+      } else {
+        uEl.innerHTML = '<div class="text-sm">No unauthorised entries</div>';
+      }
+      
+      var reg = document.getElementById("meal-register");
+      if (!r.entries.length) {
+        reg.innerHTML = '<div class="text-sm" style="text-align:center;padding:16px">No entries recorded for this date yet</div>';
+        toast("No entries yet", "warn");
+        return;
+      }
+      reg.innerHTML = '<div style="display:grid;grid-template-columns:80px 1fr 110px 70px 70px;gap:6px;padding:6px 0;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:9px;color:var(--text2)">' +
+        '<span>ID</span><span>NAME</span><span>DEPT</span><span>DINNER</span><span>BREAKFAST</span>' +
+        '</div>' +
+        r.entries.map(function(en) {
+          return '<div style="display:grid;grid-template-columns:80px 1fr 110px 70px 70px;gap:6px;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;align-items:center">' +
+            '<span style="font-family:var(--mono);font-size:9px;color:var(--text2)">' + esc(en.id) + '</span>' +
+            '<span style="font-weight:500">' + esc(en.name) + '</span>' +
+            '<span style="font-family:var(--mono);font-size:9px;color:#5ab4ff">' + esc(en.dept||"-") + '</span>' +
+            '<span class="badge badge-in">✓</span><span class="badge badge-in">✓</span>' +
+            '</div>';
+        }).join("");
+      toast("Data loaded – " + r.entries.length + " entries", "ok");
+    },
+    function(e) {
+      btn.disabled = false;
+      btn.textContent = "REFRESH DATA";
+      toast("Error: " + (e.message || "Failed to load"), "err");
+    }
+  );
+});
+
+toast("✅ System ready! Upload Excel for bulk entry (100-200 employees at once)", "ok");
+</script>
+</body>
+</html>
