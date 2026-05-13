@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Salus Night Shift FMS · Bulk Excel Upload</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{--bg:#0a0e14;--surface:#111720;--surface2:#1a2332;--border:#1e2d42;--accent:#00c896;--accent2:#0096ff;--warn:#ff9500;--danger:#ff3b3b;--text:#e8f0fe;--text2:#7a9abf;--mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',sans-serif;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:52px;position:sticky;top:0;z-index:100;flex-wrap:wrap;gap:8px;}
+.brand{font-family:var(--mono);font-size:12px;color:var(--accent);letter-spacing:.08em;}
+.clock{font-family:var(--mono);font-size:12px;color:var(--text2);}
+.tab-nav{display:flex;gap:2px;background:var(--bg);padding:3px;border-radius:8px;border:1px solid var(--border);}
+.tab-btn{font-family:var(--mono);font-size:10px;padding:5px 12px;border:none;background:transparent;color:var(--text2);border-radius:6px;cursor:pointer;letter-spacing:.04em;transition:all .2s;}
+.tab-btn.active{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
+.panel{display:none;padding:20px;max-width:860px;margin:0 auto;}
+.panel.active{display:block;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:14px;}
+.card-title{font-family:var(--mono);font-size:10px;color:var(--accent);letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.card-title::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--accent);display:inline-block;}
+input,select{background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:var(--sans);font-size:13px;padding:9px 12px;border-radius:8px;width:100%;outline:none;}
+input:focus,select:focus{border-color:var(--accent);}
+input::placeholder{color:var(--text2);}
+label{font-size:11px;color:var(--text2);margin-bottom:5px;display:block;font-family:var(--mono);}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.btn{font-family:var(--mono);font-size:11px;padding:9px 18px;border:none;border-radius:8px;cursor:pointer;letter-spacing:.04em;font-weight:500;transition:opacity .15s;}
+.btn:disabled{opacity:.45;cursor:not-allowed;}
+.btn-primary{background:var(--accent);color:#000;}
+.btn-danger{background:var(--danger);color:#fff;}
+.btn-warn{background:var(--warn);color:#000;}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text2);}
+.btn-sm{padding:5px 11px;font-size:10px;}
+.flex{display:flex;gap:8px;align-items:center;}
+.flex-end{justify-content:flex-end;}
+.flex-col{flex-direction:column;align-items:stretch;}
+.staff-item{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;display:flex;align-items:center;gap:10px;font-size:12px;margin-bottom:6px;flex-wrap:wrap;}
+.emp-id{font-family:var(--mono);font-size:10px;color:var(--text2);min-width:70px;}
+.emp-name{flex:1;font-weight:500;}
+.emp-tag{font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:4px;}
+.tag-dept{background:rgba(0,150,255,.12);color:#5ab4ff;}
+.tag-role{background:rgba(0,200,150,.12);color:var(--accent);}
+.del-btn{background:none;border:none;color:var(--danger);cursor:pointer;font-size:13px;padding:5px;}
+.badge{display:inline-block;font-family:var(--mono);font-size:9px;padding:2px 9px;border-radius:20px;}
+.badge-pending{background:rgba(255,149,0,.15);color:var(--warn);border:1px solid rgba(255,149,0,.3);}
+.badge-sent{background:rgba(0,200,150,.12);color:var(--accent);border:1px solid rgba(0,200,150,.3);}
+.badge-in{background:rgba(0,200,150,.12);color:var(--accent);border:1px solid rgba(0,200,150,.3);}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:18px;}
+.stat-box{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;}
+.stat-num{font-family:var(--mono);font-size:22px;font-weight:600;margin-bottom:3px;}
+.stat-label{font-family:var(--mono);font-size:9px;color:var(--text2);letter-spacing:.06em;}
+.c-green{color:var(--accent);}.c-blue{color:var(--accent2);}.c-warn{color:var(--warn);}.c-red{color:var(--danger);}
+.gate-item{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:10px;margin-bottom:7px;flex-wrap:wrap;}
+.gate-item.auth{border-left:3px solid var(--accent);}
+.gate-item.entered{opacity:.5;}
+.gate-info{flex:1;}
+.gate-name{font-weight:500;font-size:13px;}
+.gate-meta{font-family:var(--mono);font-size:10px;color:var(--text2);margin-top:2px;}
+.alert{border-radius:8px;padding:10px 14px;margin-bottom:10px;font-size:12px;display:flex;align-items:center;gap:8px;}
+.alert-warn{background:rgba(255,149,0,.1);border:1px solid rgba(255,149,0,.3);color:var(--warn);}
+.alert-success{background:rgba(0,200,150,.1);border:1px solid rgba(0,200,150,.3);color:var(--accent);}
+.alert-danger{background:rgba(255,59,59,.1);border:1px solid rgba(255,59,59,.3);color:var(--danger);}
+.log-entry{font-family:var(--mono);font-size:10px;color:var(--text2);padding:5px 0;border-bottom:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap;}
+.log-time{color:var(--accent);min-width:130px;}
+.log-auth{color:var(--accent);}.log-unauth{color:var(--danger);}
+.meal-row{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);}
+.meal-row:last-child{border-bottom:none;}
+.meal-count{font-family:var(--mono);font-size:20px;font-weight:600;color:var(--accent);}
+.divider{height:1px;background:var(--border);margin:14px 0;}
+.text-sm{font-size:11px;color:var(--text2);}
+.mt8{margin-top:8px;}
+.mb12{margin-bottom:12px;}
+#toast{position:fixed;bottom:24px;right:24px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 18px;font-family:var(--mono);font-size:11px;color:var(--text);z-index:999;display:none;max-width:300px;box-shadow:0 8px 32px rgba(0,0,0,.4);}
+.search-wrap{position:relative;margin-bottom:12px;}
+.search-wrap input{padding-left:34px;}
+.search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text2);font-size:13px;}
+.upload-area{border:1px dashed var(--border);background:rgba(0,200,150,.03);border-radius:12px;padding:14px;transition:0.2s;}
+.upload-area:hover{border-color:var(--accent);}
+.excel-hint{font-size:9px;margin-top:6px;color:var(--text2);}
+</style>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+<div id="toast"></div>
+<div class="topbar">
+  <div class="brand">SALUS // NIGHT SHIFT FMS (BULK EXCEL)</div>
+  <div class="tab-nav">
+    <button class="tab-btn active" id="tab-prod">PRODUCTION HEAD</button>
+    <button class="tab-btn" id="tab-gate">SECURITY GATE</button>
+    <button class="tab-btn" id="tab-canteen">CANTEEN</button>
+  </div>
+  <div class="clock" id="clock">--:--:--</div>
+</div>
+
+<!-- PRODUCTION HEAD PANEL -->
+<div class="panel active" id="panel-prod">
+  <div class="card">
+    <div class="card-title">Submitted by</div>
+    <div class="row">
+      <div><label>Production Head Name</label><input id="ph-name" type="text" placeholder="e.g. Suresh Sharma"></div>
+      <div><label>Shift Date</label><input id="shift-date" type="date"></div>
+    </div>
+  </div>
+  
+  <div class="card">
+    <div class="card-title">📎 Bulk Excel Upload</div>
+    <div class="upload-area">
+      <div class="flex" style="justify-content:space-between; flex-wrap:wrap; gap:8px;">
+        <div>
+          <input type="file" id="excelUpload" accept=".xlsx, .xls, .csv" style="display:none;">
+          <button class="btn btn-primary btn-sm" id="triggerExcelBtn">📂 SELECT EXCEL FILE</button>
+          <button class="btn btn-ghost btn-sm" id="downloadTemplateBtn">📄 DOWNLOAD TEMPLATE</button>
+        </div>
+        <button class="btn btn-warn btn-sm" id="bulkAddBtn">➕ BULK ADD</button>
+      </div>
+      <div class="excel-hint">Required columns: <strong>Employee ID, Full Name, Department, Role</strong></div>
+      <div id="previewTable" style="margin-top:12px; max-height:200px; overflow-y:auto; font-size:11px;"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Add single staff</div>
+    <div class="row">
+      <div><label>Employee ID</label><input id="emp-id" type="text" placeholder="e.g. SLS-042"></div>
+      <div><label>Full Name</label><input id="emp-name" type="text" placeholder="e.g. Ramesh Kumar"></div>
+    </div>
+    <div class="row">
+      <div><label>Department</label><select id="emp-dept"><option value="">-- Select --</option><option>Production</option><option>Packing</option><option>Quality Control</option><option>Warehouse</option><option>Maintenance</option><option>Helper</option></select></div>
+      <div><label>Role</label><select id="emp-role"><option value="">-- Select --</option><option>Operator</option><option>Helper</option><option>Supervisor</option><option>Technician</option><option>Staff</option></select></div>
+    </div>
+    <div class="flex mt8">
+      <button class="btn btn-primary" id="add-btn">+ ADD SINGLE</button>
+      <button class="btn btn-ghost" id="clear-btn">CLEAR</button>
+    </div>
+  </div>
+  
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+      <div class="card-title" style="margin:0">Tonight's authorised list</div>
+      <div class="flex"><span id="list-badge" class="badge badge-pending">DRAFT</span><button class="btn btn-warn btn-sm" id="submit-btn">SUBMIT TO SECURITY</button></div>
+    </div>
+    <div id="empty-msg" style="text-align:center;padding:28px;color:var(--text2);font-family:var(--mono);font-size:11px;">NO STAFF ADDED YET</div>
+    <div id="staff-list"></div>
+    <div class="divider"></div>
+    <div class="flex flex-end"><span class="text-sm" id="total-count">Total: 0 staff</span></div>
+  </div>
+</div>
+
+<!-- SECURITY GATE PANEL -->
+<div class="panel" id="panel-gate">
+  <div class="stats-grid">
+    <div class="stat-box"><div class="stat-num c-blue" id="s-auth">0</div><div class="stat-label">AUTHORISED</div></div>
+    <div class="stat-box"><div class="stat-num c-green" id="s-entered">0</div><div class="stat-label">ENTERED</div></div>
+    <div class="stat-box"><div class="stat-num c-warn" id="s-pending">0</div><div class="stat-label">PENDING</div></div>
+    <div class="stat-box"><div class="stat-num c-red" id="s-unauth">0</div><div class="stat-label">UNAUTHORISED</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Date and security officer</div>
+    <div class="row">
+      <div><label>Shift Date</label><input id="gate-date" type="date"></div>
+      <div><label>Security Officer Name</label><input id="sec-name" type="text" placeholder="Your name"></div>
+    </div>
+    <button class="btn btn-primary btn-sm" id="load-btn">LOAD LIST</button>
+  </div>
+  <div id="gate-status-msg" class="alert alert-warn" style="display:none"></div>
+  <div class="card">
+    <div class="card-title">Search and verify entry</div>
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input id="gate-search" type="text" placeholder="Search by name or Employee ID...">
+    </div>
+    <div id="gate-list"><div style="text-align:center;padding:20px;font-family:var(--mono);font-size:11px;color:var(--text2)">Load list first</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Log unauthorised entry</div>
+    <div class="row">
+      <div><label>Person Name</label><input id="un-name" type="text" placeholder="Name"></div>
+      <div><label>Reason / Note</label><input id="un-reason" type="text" placeholder="e.g. No name on list"></div>
+    </div>
+    <button class="btn btn-danger btn-sm" id="unauth-btn">LOG UNAUTHORISED</button>
+  </div>
+  <div class="card">
+    <div class="card-title">Activity log</div>
+    <div id="activity-log" style="max-height:200px;overflow-y:auto;">
+      <div style="text-align:center;padding:16px;font-family:var(--mono);font-size:10px;color:var(--text2)">No activity</div>
+    </div>
+    <button class="btn btn-ghost btn-sm mt8" id="refresh-log-btn">REFRESH LOG</button>
+  </div>
+</div>
+
+<!-- CANTEEN PANEL -->
+<div class="panel" id="panel-canteen">
+  <div class="stats-grid">
+    <div class="stat-box"><div class="stat-num c-blue" id="c-entered">0</div><div class="stat-label">INSIDE PLANT</div></div>
+    <div class="stat-box"><div class="stat-num c-green" id="c-dinner">0</div><div class="stat-label">DINNER PLATES</div></div>
+    <div class="stat-box"><div class="stat-num c-green" id="c-bfast">0</div><div class="stat-label">BREAKFAST PLATES</div></div>
+    <div class="stat-box"><div class="stat-num c-warn" id="c-unauth">0</div><div class="stat-label">UNAUTHORISED</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Select date</div>
+    <div class="row">
+      <div><label>Shift Date</label><input id="canteen-date" type="date"></div>
+      <div style="display:flex;align-items:flex-end;"><button class="btn btn-primary btn-sm" id="canteen-btn">REFRESH DATA</button></div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="card">
+      <div class="card-title">Meal count</div>
+      <div class="meal-row"><div><div style="font-size:13px;font-weight:500">Dinner</div><div class="text-sm">~10:00 PM</div></div><div class="meal-count" id="m-dinner">0</div></div>
+      <div class="meal-row"><div><div style="font-size:13px;font-weight:500">Breakfast</div><div class="text-sm">~6:00 AM</div></div><div class="meal-count" id="m-bfast">0</div></div>
+      <div class="meal-row"><div><div style="font-size:13px;font-weight:500">Buffer (10%)</div><div class="text-sm">Extra recommended</div></div><div class="meal-count" id="m-buf" style="color:var(--text2)">0</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Unauthorised - do NOT serve</div>
+      <div id="canteen-unauth"><div class="text-sm">No unauthorised entries</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Meal register</div>
+    <div id="meal-register"><div class="text-sm" style="padding:16px;text-align:center">Load data to see register</div></div>
+  </div>
+</div>
+
+<script>
+// ==================== CONFIGURATION ====================
+var API_URL = "https://script.google.com/macros/s/AKfycbzuy0D5eKw9qIA7R75LzHMbe0JXpNo5L7js9ybZ-ENyJIj-Yem9z44KvrFU3XwGcUfX/exec";
+
+// ==================== HELPER FUNCTIONS ====================
+function esc(s) { return (""+s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function pad(n) { return n < 10 ? "0" + n : "" + n; }
+
+function toast(msg, type) {
+  var el = document.getElementById("toast");
+  el.textContent = msg; el.style.display = "block";
+  el.style.borderColor = type === "ok" ? "var(--accent)" : type === "err" ? "var(--danger)" : "var(--warn)";
+  clearTimeout(el._t);
+  el._t = setTimeout(function () { el.style.display = "none"; }, 3500);
+}
+
+function apiCall(body, onSuccess, onError) {
+  if (!API_URL) { toast("⚠️ Please set your Apps Script URL", "err"); return; }
+  fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data && data.success === false) {
+      (onError || function(e) { toast("Error: " + (e.message || "Unknown"), "err"); })({ message: data.error || "Unknown error" });
+    } else {
+      onSuccess(data);
+    }
+  })
+  .catch(function(e) { (onError || function(e) { toast("API Error: " + e.message, "err"); })(e); });
+}
+
+// Clock
+setInterval(function () {
+  var n = new Date(), h = n.getHours(), m = n.getMinutes(), s = n.getSeconds();
+  var ap = h >= 12 ? "PM" : "AM";
+  if (h > 12) h -= 12; if (h === 0) h = 12;
+  document.getElementById("clock").textContent = pad(h) + ":" + pad(m) + ":" + pad(s) + " " + ap;
+}, 1000);
+
+// Tab switching
+["prod","gate","canteen"].forEach(function (name) {
+  document.getElementById("tab-" + name).addEventListener("click", function () {
+    document.querySelectorAll(".tab-btn").forEach(function(b) { b.classList.remove("active"); });
+    document.querySelectorAll(".panel").forEach(function(p) { p.classList.remove("active"); });
+    this.classList.add("active");
+    document.getElementById("panel-" + name).classList.add("active");
+  });
+});
+
+// Set default dates
+var today = new Date();
+var todayStr = today.getFullYear() + "-" + pad(today.getMonth() + 1) + "-" + pad(today.getDate());
+document.getElementById("shift-date").value = todayStr;
+document.getElementById("gate-date").value = todayStr;
+document.getElementById("canteen-date").value = todayStr;
+
+// ==================== PRODUCTION HEAD ====================
+var staffList = [];
+
+function renderStaff() {
+  var el = document.getElementById("staff-list");
+  document.getElementById("total-count").textContent = "Total: " + staffList.length + " staff";
+  document.getElementById("empty-msg").style.display = staffList.length ? "none" : "block";
+  if (!staffList.length) { el.innerHTML = ""; return; }
+  el.innerHTML = staffList.map(function (s, i) {
+    return '<div class="staff-item">' +
+      '<span class="emp-id">' + esc(s.id) + '</span>' +
+      '<span class="emp-name">' + esc(s.name) + '</span>' +
+      '<span class="emp-tag tag-dept">' + (s.dept || "-") + '</span>' +
+      '<span class="emp-tag tag-role">' + (s.role || "-") + '</span>' +
+      '<button class="del-btn" data-idx="' + i + '">✕</button>' +
+      '</div>';
+  }).join("");
+  el.querySelectorAll(".del-btn").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      staffList.splice(parseInt(this.getAttribute("data-idx")), 1);
+      renderStaff();
+      document.getElementById("list-badge").className = "badge badge-pending";
+      document.getElementById("list-badge").textContent = "DRAFT";
+    });
+  });
+}
+
+document.getElementById("add-btn").addEventListener("click", function () {
+  var name = document.getElementById("emp-name").value.trim();
+  if (!name) { toast("Enter employee name", "warn"); return; }
+  var id = document.getElementById("emp-id").value.trim() || ("SLS-" + (staffList.length + 1));
+  var dept = document.getElementById("emp-dept").value;
+  var role = document.getElementById("emp-role").value;
+  if (staffList.some(function(s) { return s.id === id; })) { toast("ID already added", "warn"); return; }
+  staffList.push({ id: id, name: name, dept: dept, role: role });
+  renderStaff();
+  document.getElementById("emp-id").value = "";
+  document.getElementById("emp-name").value = "";
+  document.getElementById("emp-dept").selectedIndex = 0;
+  document.getElementById("emp-role").selectedIndex = 0;
+  document.getElementById("list-badge").className = "badge badge-pending";
+  document.getElementById("list-badge").textContent = "DRAFT";
+  toast(name + " added", "ok");
+});
+
+document.getElementById("clear-btn").addEventListener("click", function () {
+  document.getElementById("emp-id").value = "";
+  document.getElementById("emp-name").value = "";
+  document.getElementById("emp-dept").selectedIndex = 0;
+  document.getElementById("emp-role").selectedIndex = 0;
+});
+
+document.getElementById("submit-btn").addEventListener("click", function () {
+  if (!staffList.length) { toast("Add staff first", "warn"); return; }
+  var phName = document.getElementById("ph-name").value.trim() || "Production Head";
+  var shiftDate = document.getElementById("shift-date").value;
+  if (!shiftDate) { toast("Select shift date", "warn"); return; }
+  var btn = this;
+  btn.disabled = true;
+  btn.textContent = "SUBMITTING...";
+  apiCall(
+    { action: "submitList", shiftDate: shiftDate, staff: staffList, submittedBy: phName },
+    function (r) {
+      btn.disabled = false;
+      btn.textContent = "SUBMIT TO SECURITY";
+      document.getElementById("list-badge").className = "badge badge-sent";
+      document.getElementById("list-badge").textContent = "SUBMITTED";
+      toast("List submitted – " + r.count + " staff authorised", "ok");
+    },
+    function (e) {
+      btn.disabled = false;
+      btn.textContent = "SUBMIT TO SECURITY";
+      toast("Error: " + (e.message || "Failed to submit"), "err");
+    }
+  );
+});
+
+// ==================== EXCEL BULK UPLOAD ====================
+var parsedExcelRows = [];
+
+document.getElementById("triggerExcelBtn").addEventListener("click", function() {
+  document.getElementById("excelUpload").click();
+});
+
+document.getElementById("excelUpload").addEventListener("change", function(e) {
+  var file = e.target.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(evt) {
+    var data = new Uint8Array(evt.target.result);
+    var workbook = XLSX.read(data, { type: 'array' });
+    var firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+    var rows = XLSX.utils.sheet_to_json(firstSheet, { defval: "" });
+    if (!rows.length) { toast("Excel is empty", "err"); return; }
+    
+    var clean = [];
+    for (var i = 0; i < rows.length; i++) {
+      var row = rows[i];
+      var id = row["Employee ID"] || row["employee id"] || row["ID"] || row["id"] || "";
+      var name = row["Full Name"] || row["full name"] || row["Name"] || row["name"] || "";
+      var dept = row["Department"] || row["department"] || row["Dept"] || "";
+      var role = row["Role"] || row["role"] || "";
+      
+      if (id.toString().trim() && name.toString().trim()) {
+        clean.push({ 
+          id: id.toString().trim(), 
+          name: name.toString().trim(), 
+          dept: dept.toString().trim() || "", 
+          role: role.toString().trim() || "" 
+        });
+      }
+    }
+    
+    if (clean.length === 0) { toast("No valid rows (need Employee ID & Full Name)", "err"); return; }
+    parsedExcelRows = clean;
+    
+    var previewHtml = '<div style="font-family:var(--mono);font-size:9px;margin-bottom:6px;">📋 Preview (' + parsedExcelRows.length + ' records):</div><div style="max-height:140px;overflow-y:auto;">';
+    for (var j = 0; j < parsedExcelRows.length; j++) {
+      var r = parsedExcelRows[j];
+      var alreadyExists = staffList.some(function(s) { return s.id === r.id; });
+      previewHtml += '<div style="border-bottom:1px solid var(--border);padding:5px 0;display:flex;gap:6px;align-items:center;flex-wrap:wrap;">' +
+        '<span style="min-width:70px;">' + esc(r.id) + '</span>' +
+        '<span style="min-width:100px;">' + esc(r.name) + '</span>' +
+        '<span style="min-width:80px;">' + esc(r.dept || '-') + '</span>' +
+        '<span>' + esc(r.role || '-') + '</span>' +
+        (alreadyExists ? '<span style="background:rgba(255,149,0,.3);padding:2px 6px;border-radius:4px;">⚠️ DUPLICATE</span>' : '') +
+        '</div>';
+    }
+    previewHtml += '</div><div class="text-sm mt8">Click "BULK ADD" to import new staff (duplicates will be skipped).</div>';
+    document.getElementById("previewTable").innerHTML = previewHtml;
+    toast(parsedExcelRows.length + " rows loaded. Click BULK ADD to import.", "ok");
+  };
+  reader.readAsArrayBuffer(file);
+});
+
+document.getElementById("bulkAddBtn").addEventListener("click", function() {
+  if (!parsedExcelRows.length) { toast("No Excel data loaded. Upload file first.", "warn"); return; }
+  var addedCount = 0;
+  var duplicateCount = 0;
+  for (var i = 0; i < parsedExcelRows.length; i++) {
+    var row = parsedExcelRows[i];
+    if (!row.id || !row.name) continue;
+    if (staffList.some(function(s) { return s.id === row.id; })) {
+      duplicateCount++;
+      continue;
+    }
+    staffList.push({
+      id: row.id,
+      name: row.name,
+      dept: row.dept || "",
+      role: row.role || ""
+    });
+    addedCount++;
+  }
+  renderStaff();
+  document.getElementById("list-badge").className = "badge badge-pending";
+  document.getElementById("list-badge").textContent = "DRAFT";
+  toast("✅ Imported: " + addedCount + " new staff, " + duplicateCount + " duplicates skipped.", "ok");
+  document.getElementById("previewTable").innerHTML = '<div class="text-sm">✔ Import completed. ' + addedCount + ' employees added.</div>';
+  parsedExcelRows = [];
+  document.getElementById("excelUpload").value = "";
+});
+
+document.getElementById("downloadTemplateBtn").addEventListener("click", function() {
+  var templateData = [
+    { "Employee ID": "SLS-101", "Full Name": "Amit Sharma", "Department": "Production", "Role": "Operator" },
+    { "Employee ID": "SLS-102", "Full Name": "Neha Verma", "Department": "Quality Control", "Role": "Supervisor" },
+    { "Employee ID": "SLS-103", "Full Name": "Rajesh Kumar", "Department": "Warehouse", "Role": "Helper" }
+  ];
+  var ws = XLSX.utils.json_to_sheet(templateData);
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "NightShift_Staff");
+  XLSX.writeFile(wb, "Salus_Bulk_Template.xlsx");
+  toast("Template downloaded", "ok");
+});
+
+// ==================== SECURITY GATE ====================
+var gateData = { list: [], entries: [], unauth: [] };
+
+document.getElementById("load-btn").addEventListener("click", function() {
+  var date = document.getElementById("gate-date").value;
+  var msgEl = document.getElementById("gate-status-msg");
+  if (!date) { toast("Select date", "warn"); return; }
+  var btn = this;
+  btn.disabled = true;
+  btn.textContent = "LOADING...";
+  msgEl.style.display = "flex";
+  msgEl.className = "alert alert-warn";
+  msgEl.textContent = "Loading list...";
+  
+  apiCall(
+    { action: "getGateData", shiftDate: date },
+    function(r) {
+      btn.disabled = false;
+      btn.textContent = "LOAD LIST";
+      gateData = r;
+      if (r.list.length === 0) {
+        msgEl.className = "alert alert-warn";
+        msgEl.textContent = "⚠ No authorised list found for " + date + ". Ask Production Head to submit.";
+      } else {
+        msgEl.className = "alert alert-success";
+        msgEl.textContent = "✓ List loaded – " + r.list.length + " authorised staff.";
+      }
+      updateGateStats();
+      filterGateList();
+      refreshActivityLog();
+    },
+    function(e) {
+      btn.disabled = false;
+      btn.textContent = "LOAD LIST";
+      msgEl.style.display = "none";
+      toast("Error loading list: " + (e.message || "Unknown"), "err");
+    }
+  );
+});
+
+function updateGateStats() {
+  document.getElementById("s-auth").textContent = gateData.list.length;
+  document.getElementById("s-entered").textContent = gateData.entries.length
