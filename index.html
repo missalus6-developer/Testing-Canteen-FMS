@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Salus Night Shift FMS - FULLY WORKING</title>
+<title>Salus Night Shift FMS</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -25,7 +25,7 @@ input:focus,select:focus{border-color:var(--accent);}
 input::placeholder{color:var(--text2);}
 label{font-size:11px;color:var(--text2);margin-bottom:5px;display:block;font-family:var(--mono);}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
-.btn{font-family:var(--mono);font-size:11px;padding:9px 18px;border:none;border-radius:8px;cursor:pointer;letter-spacing:.04em;font-weight:500;transition:opacity .15s;}
+.btn{font-family:var(--mono);font-size:11px;padding:9px 18px;border:none;border-radius:8px;cursor:pointer;letter-spacing:.04em;font-weight:500;transition:all .15s;}
 .btn:disabled{opacity:.45;cursor:not-allowed;}
 .btn-primary{background:var(--accent);color:#000;}
 .btn-danger{background:var(--danger);color:#fff;}
@@ -69,21 +69,22 @@ label{font-size:11px;color:var(--text2);margin-bottom:5px;display:block;font-fam
 .divider{height:1px;background:var(--border);margin:14px 0;}
 .text-sm{font-size:11px;color:var(--text2);}
 .mt8{margin-top:8px;}
-#toast{position:fixed;bottom:24px;right:24px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 18px;font-family:var(--mono);font-size:11px;color:var(--text);z-index:999;display:none;max-width:300px;box-shadow:0 8px 32px rgba(0,0,0,.4);}
+#toast{position:fixed;bottom:24px;right:24px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 18px;font-family:var(--mono);font-size:11px;color:var(--text);z-index:999;display:none;max-width:320px;box-shadow:0 8px 32px rgba(0,0,0,.4);}
 .search-wrap{position:relative;margin-bottom:12px;}
 .search-wrap input{padding-left:34px;}
 .search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text2);font-size:13px;}
-.upload-area{border:1px dashed var(--border);background:rgba(0,200,150,.03);border-radius:12px;padding:14px;transition:0.2s;}
-.upload-area:hover{border-color:var(--accent);}
+.upload-area{border:1px dashed var(--border);background:rgba(0,200,150,.03);border-radius:12px;padding:14px;}
 .excel-hint{font-size:9px;margin-top:6px;color:var(--text2);}
-.demo-badge{position:fixed;bottom:20px;left:20px;z-index:1000;background:var(--surface);border:1px solid var(--accent);border-radius:20px;padding:5px 12px;font-size:10px;font-family:var(--mono);}
+.sheets-badge{position:fixed;bottom:20px;left:20px;z-index:1000;background:var(--surface);border:1px solid var(--accent);border-radius:20px;padding:5px 12px;font-size:10px;font-family:var(--mono);color:var(--accent);}
+.spinner{display:inline-block;width:10px;height:10px;border:2px solid rgba(0,200,150,.3);border-top-color:var(--accent);border-radius:50%;animation:spin .6s linear infinite;margin-right:6px;}
+@keyframes spin{to{transform:rotate(360deg);}}
 </style>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 <div id="toast"></div>
 <div class="topbar">
-  <div class="brand">SALUS // NIGHT SHIFT FMS ✅ DEMO MODE</div>
+  <div class="brand">SALUS // NIGHT SHIFT FMS 📊 GOOGLE SHEETS</div>
   <div class="tab-nav">
     <button class="tab-btn active" id="tab-prod">PRODUCTION HEAD</button>
     <button class="tab-btn" id="tab-gate">SECURITY GATE</button>
@@ -91,7 +92,7 @@ label{font-size:11px;color:var(--text2);margin-bottom:5px;display:block;font-fam
   </div>
   <div class="clock" id="clock">--:--:--</div>
 </div>
-<div class="demo-badge">💾 DATA SAVED IN BROWSER (LOCAL STORAGE)</div>
+<div class="sheets-badge">📊 DATA → GOOGLE SHEETS</div>
 
 <!-- PRODUCTION HEAD PANEL -->
 <div class="panel active" id="panel-prod">
@@ -102,20 +103,20 @@ label{font-size:11px;color:var(--text2);margin-bottom:5px;display:block;font-fam
       <div><label>Shift Date</label><input id="shift-date" type="date"></div>
     </div>
   </div>
-  
+
   <div class="card">
-    <div class="card-title">📎 Bulk Excel Upload (100-200 employees at once)</div>
+    <div class="card-title">📎 Bulk Excel Upload</div>
     <div class="upload-area">
-      <div class="flex" style="justify-content:space-between; flex-wrap:wrap; gap:8px;">
+      <div class="flex" style="justify-content:space-between;flex-wrap:wrap;gap:8px;">
         <div>
-          <input type="file" id="excelUpload" accept=".xlsx, .xls, .csv" style="display:none;">
+          <input type="file" id="excelUpload" accept=".xlsx,.xls,.csv" style="display:none;">
           <button class="btn btn-primary btn-sm" id="triggerExcelBtn">📂 SELECT EXCEL FILE</button>
           <button class="btn btn-ghost btn-sm" id="downloadTemplateBtn">📄 DOWNLOAD TEMPLATE</button>
         </div>
-        <button class="btn btn-warn btn-sm" id="bulkAddBtn">➕ BULK ADD (IMPORT ALL)</button>
+        <button class="btn btn-warn btn-sm" id="bulkAddBtn">➕ BULK ADD</button>
       </div>
       <div class="excel-hint">✅ Required columns: <strong>Employee ID, Full Name, Department, Role</strong></div>
-      <div id="previewTable" style="margin-top:12px; max-height:200px; overflow-y:auto; font-size:11px;"></div>
+      <div id="previewTable" style="margin-top:12px;max-height:200px;overflow-y:auto;font-size:11px;"></div>
     </div>
   </div>
 
@@ -126,19 +127,34 @@ label{font-size:11px;color:var(--text2);margin-bottom:5px;display:block;font-fam
       <div><label>Full Name</label><input id="emp-name" type="text" placeholder="e.g. Ramesh Kumar"></div>
     </div>
     <div class="row">
-      <div><label>Department</label><select id="emp-dept"><option value="">-- Select --</option><option>Production</option><option>Packing</option><option>Quality Control</option><option>Warehouse</option><option>Maintenance</option><option>Helper</option></select></div>
-      <div><label>Role</label><select id="emp-role"><option value="">-- Select --</option><option>Operator</option><option>Helper</option><option>Supervisor</option><option>Technician</option><option>Staff</option></select></div>
+      <div><label>Department</label>
+        <select id="emp-dept">
+          <option value="">-- Select --</option>
+          <option>Production</option><option>Packing</option><option>Quality Control</option>
+          <option>Warehouse</option><option>Maintenance</option><option>Helper</option>
+        </select>
+      </div>
+      <div><label>Role</label>
+        <select id="emp-role">
+          <option value="">-- Select --</option>
+          <option>Operator</option><option>Helper</option><option>Supervisor</option>
+          <option>Technician</option><option>Staff</option>
+        </select>
+      </div>
     </div>
     <div class="flex mt8">
       <button class="btn btn-primary" id="add-btn">+ ADD SINGLE</button>
       <button class="btn btn-ghost" id="clear-btn">CLEAR</button>
     </div>
   </div>
-  
+
   <div class="card">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
       <div class="card-title" style="margin:0">Tonight's authorised list</div>
-      <div class="flex"><span id="list-badge" class="badge badge-pending">DRAFT</span><button class="btn btn-warn btn-sm" id="submit-btn">SUBMIT TO SECURITY</button></div>
+      <div class="flex">
+        <span id="list-badge" class="badge badge-pending">DRAFT</span>
+        <button class="btn btn-warn btn-sm" id="submit-btn">SUBMIT TO SECURITY →SHEETS</button>
+      </div>
     </div>
     <div id="empty-msg" style="text-align:center;padding:28px;color:var(--text2);font-family:var(--mono);font-size:11px;">NO STAFF ADDED YET</div>
     <div id="staff-list"></div>
@@ -161,7 +177,7 @@ label{font-size:11px;color:var(--text2);margin-bottom:5px;display:block;font-fam
       <div><label>Shift Date</label><input id="gate-date" type="date"></div>
       <div><label>Security Officer Name</label><input id="sec-name" type="text" placeholder="Your name"></div>
     </div>
-    <button class="btn btn-primary btn-sm" id="load-btn">LOAD LIST</button>
+    <button class="btn btn-primary btn-sm" id="load-btn">LOAD FROM SHEETS</button>
   </div>
   <div id="gate-status-msg" class="alert alert-warn" style="display:none"></div>
   <div class="card">
@@ -170,7 +186,7 @@ label{font-size:11px;color:var(--text2);margin-bottom:5px;display:block;font-fam
       <span class="search-icon">🔍</span>
       <input id="gate-search" type="text" placeholder="Search by name or Employee ID...">
     </div>
-    <div id="gate-list"><div style="text-align:center;padding:20px;">Load list first</div></div>
+    <div id="gate-list"><div style="text-align:center;padding:20px;color:var(--text2);">Load list first</div></div>
   </div>
   <div class="card">
     <div class="card-title">Log unauthorised entry</div>
@@ -178,12 +194,12 @@ label{font-size:11px;color:var(--text2);margin-bottom:5px;display:block;font-fam
       <div><label>Person Name</label><input id="un-name" type="text" placeholder="Name"></div>
       <div><label>Reason / Note</label><input id="un-reason" type="text" placeholder="e.g. No name on list"></div>
     </div>
-    <button class="btn btn-danger btn-sm" id="unauth-btn">LOG UNAUTHORISED</button>
+    <button class="btn btn-danger btn-sm" id="unauth-btn">LOG UNAUTHORISED → SHEETS</button>
   </div>
   <div class="card">
     <div class="card-title">Activity log</div>
     <div id="activity-log" style="max-height:200px;overflow-y:auto;"></div>
-    <button class="btn btn-ghost btn-sm mt8" id="refresh-log-btn">REFRESH LOG</button>
+    <button class="btn btn-ghost btn-sm mt8" id="refresh-log-btn">REFRESH LOG FROM SHEETS</button>
   </div>
 </div>
 
@@ -199,7 +215,7 @@ label{font-size:11px;color:var(--text2);margin-bottom:5px;display:block;font-fam
     <div class="card-title">Select date</div>
     <div class="row">
       <div><label>Shift Date</label><input id="canteen-date" type="date"></div>
-      <div style="display:flex;align-items:flex-end;"><button class="btn btn-primary btn-sm" id="canteen-btn">REFRESH DATA</button></div>
+      <div style="display:flex;align-items:flex-end;"><button class="btn btn-primary btn-sm" id="canteen-btn">LOAD FROM SHEETS</button></div>
     </div>
   </div>
   <div class="row">
@@ -210,7 +226,7 @@ label{font-size:11px;color:var(--text2);margin-bottom:5px;display:block;font-fam
       <div class="meal-row"><div><div style="font-size:13px;font-weight:500">Buffer (10%)</div><div class="text-sm">Extra recommended</div></div><div class="meal-count" id="m-buf" style="color:var(--text2)">0</div></div>
     </div>
     <div class="card">
-      <div class="card-title">Unauthorised - do NOT serve</div>
+      <div class="card-title">Unauthorised – do NOT serve</div>
       <div id="canteen-unauth"><div class="text-sm">No unauthorised entries</div></div>
     </div>
   </div>
@@ -221,413 +237,405 @@ label{font-size:11px;color:var(--text2);margin-bottom:5px;display:block;font-fam
 </div>
 
 <script>
-// ========== 100% WORKING DEMO MODE - NO API CALLS ==========
-// Sab kuch localStorage mein save hoga
+// ============================================================
+//  SALUS – Google Sheets backend via Apps Script
+//  Backend URL: deployed Apps Script web app
+// ============================================================
+var API = "https://script.google.com/macros/s/AKfycbzpNsMAlN3CfQkYiC7BFrXntooDo_DnioksZwUGuximEz00qrQXONAXv2-GXkh-7f4NpA/exec";
 
-function esc(s) { if(!s) return ""; return (""+s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
-function pad(n) { return n < 10 ? "0" + n : "" + n; }
+function esc(s){if(!s)return"";return(""+s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function pad(n){return n<10?"0"+n:""+n;}
 
-function toast(msg) {
-    const el = document.getElementById("toast");
-    el.textContent = msg; 
-    el.style.display = "block";
-    setTimeout(function () { el.style.display = "none"; }, 3000);
+// ---- Toast ----
+function toast(msg, type){
+  var el=document.getElementById("toast");
+  el.innerHTML=(type==="loading"?'<span class="spinner"></span>':"")+msg;
+  el.style.borderColor=type==="error"?"var(--danger)":type==="success"?"var(--accent)":"var(--border)";
+  el.style.display="block";
+  if(type!=="loading"){clearTimeout(window._tt);window._tt=setTimeout(function(){el.style.display="none";},3500);}
+}
+function toastHide(){document.getElementById("toast").style.display="none";}
+
+// ---- Clock ----
+setInterval(function(){
+  var n=new Date(),h=n.getHours(),m=n.getMinutes(),s=n.getSeconds();
+  var ap=h>=12?"PM":"AM";if(h>12)h-=12;if(h===0)h=12;
+  document.getElementById("clock").textContent=pad(h)+":"+pad(m)+":"+pad(s)+" "+ap;
+},1000);
+
+// ---- Tabs ----
+["prod","gate","canteen"].forEach(function(name){
+  document.getElementById("tab-"+name).addEventListener("click",function(){
+    document.querySelectorAll(".tab-btn").forEach(function(b){b.classList.remove("active");});
+    document.querySelectorAll(".panel").forEach(function(p){p.classList.remove("active");});
+    this.classList.add("active");
+    document.getElementById("panel-"+name).classList.add("active");
+  });
+});
+
+// ---- Default dates ----
+var today=new Date();
+var todayStr=today.getFullYear()+"-"+pad(today.getMonth()+1)+"-"+pad(today.getDate());
+document.getElementById("shift-date").value=todayStr;
+document.getElementById("gate-date").value=todayStr;
+document.getElementById("canteen-date").value=todayStr;
+
+// ---- API call helper ----
+// Apps Script CORS ke liye no-cors mode se GET + query string use karna padta hai
+// Lekin POST ke liye we use fetch with mode no-cors won't return data,
+// so we use a JSONP-style approach via script tag for reads, and fetch for writes.
+
+function apiPost(payload, callback){
+  fetch(API, {
+    method:"POST",
+    redirect:"follow",
+    headers:{"Content-Type":"text/plain"},
+    body:JSON.stringify(payload)
+  })
+  .then(function(r){
+    // Apps Script sometimes returns text instead of JSON
+    return r.text();
+  })
+  .then(function(text){
+    try{
+      var data=JSON.parse(text);
+      callback(null,data);
+    } catch(e){
+      callback(new Error("Invalid response: "+text.substring(0,100)),null);
+    }
+  })
+  .catch(function(err){callback(err,null);});
 }
 
-// Clock
-setInterval(function () {
-    const n = new Date();
-    let h = n.getHours();
-    const m = n.getMinutes();
-    const s = n.getSeconds();
-    const ap = h >= 12 ? "PM" : "AM";
-    if (h > 12) h -= 12;
-    if (h === 0) h = 12;
-    document.getElementById("clock").textContent = pad(h) + ":" + pad(m) + ":" + pad(s) + " " + ap;
-}, 1000);
+// ============================================================
+//  PRODUCTION HEAD
+// ============================================================
+var staffList=[];
 
-// Tab switching
-["prod", "gate", "canteen"].forEach(function (name) {
-    document.getElementById("tab-" + name).addEventListener("click", function () {
-        document.querySelectorAll(".tab-btn").forEach(function(b) { b.classList.remove("active"); });
-        document.querySelectorAll(".panel").forEach(function(p) { p.classList.remove("active"); });
-        this.classList.add("active");
-        document.getElementById("panel-" + name).classList.add("active");
+function renderStaff(){
+  var el=document.getElementById("staff-list");
+  document.getElementById("total-count").textContent="Total: "+staffList.length+" staff";
+  document.getElementById("empty-msg").style.display=staffList.length?"none":"block";
+  if(!staffList.length){el.innerHTML="";return;}
+  el.innerHTML=staffList.map(function(s,i){
+    return '<div class="staff-item">'+
+      '<span class="emp-id">'+esc(s.id)+'</span>'+
+      '<span class="emp-name">'+esc(s.name)+'</span>'+
+      '<span class="emp-tag tag-dept">'+esc(s.dept||"-")+'</span>'+
+      '<span class="emp-tag tag-role">'+esc(s.role||"-")+'</span>'+
+      '<button class="del-btn" data-idx="'+i+'">✕</button>'+
+      '</div>';
+  }).join("");
+  document.querySelectorAll(".del-btn").forEach(function(btn){
+    btn.addEventListener("click",function(){
+      staffList.splice(parseInt(this.getAttribute("data-idx")),1);
+      renderStaff();setBadge("pending");
     });
-});
-
-// Set default dates
-const today = new Date();
-const todayStr = today.getFullYear() + "-" + pad(today.getMonth() + 1) + "-" + pad(today.getDate());
-document.getElementById("shift-date").value = todayStr;
-document.getElementById("gate-date").value = todayStr;
-document.getElementById("canteen-date").value = todayStr;
-
-// ==================== PRODUCTION HEAD ====================
-let staffList = [];
-
-// Load saved data from localStorage
-function loadSavedData() {
-    const saved = localStorage.getItem("currentStaffList");
-    if (saved) {
-        try {
-            staffList = JSON.parse(saved);
-            renderStaff();
-        } catch(e) {}
-    }
+  });
 }
 
-function renderStaff() {
-    const el = document.getElementById("staff-list");
-    document.getElementById("total-count").textContent = "Total: " + staffList.length + " staff";
-    document.getElementById("empty-msg").style.display = staffList.length ? "none" : "block";
-    if (!staffList.length) { el.innerHTML = ""; return; }
-    el.innerHTML = staffList.map(function (s, i) {
-        return '<div class="staff-item">' +
-            '<span class="emp-id">' + esc(s.id) + '</span>' +
-            '<span class="emp-name">' + esc(s.name) + '</span>' +
-            '<span class="emp-tag tag-dept">' + esc(s.dept || "-") + '</span>' +
-            '<span class="emp-tag tag-role">' + esc(s.role || "-") + '</span>' +
-            '<button class="del-btn" data-idx="' + i + '">✕</button>' +
-            '</div>';
-    }).join("");
-    document.querySelectorAll(".del-btn").forEach(function (btn) {
-        btn.addEventListener("click", function () {
-            staffList.splice(parseInt(this.getAttribute("data-idx")), 1);
-            renderStaff();
-            document.getElementById("list-badge").className = "badge badge-pending";
-            document.getElementById("list-badge").textContent = "DRAFT";
-            localStorage.setItem("currentStaffList", JSON.stringify(staffList));
-        });
+function setBadge(state){
+  var b=document.getElementById("list-badge");
+  if(state==="sent"){b.className="badge badge-sent";b.textContent="SUBMITTED ✓";}
+  else{b.className="badge badge-pending";b.textContent="DRAFT";}
+}
+
+document.getElementById("add-btn").addEventListener("click",function(){
+  var name=document.getElementById("emp-name").value.trim();
+  if(!name){toast("Enter employee name");return;}
+  var id=document.getElementById("emp-id").value.trim()||("SLS-"+pad(staffList.length+1));
+  var dept=document.getElementById("emp-dept").value;
+  var role=document.getElementById("emp-role").value;
+  if(staffList.some(function(s){return s.id===id;})){toast("ID already added");return;}
+  staffList.push({id:id,name:name,dept:dept,role:role});
+  renderStaff();
+  document.getElementById("emp-id").value="";
+  document.getElementById("emp-name").value="";
+  document.getElementById("emp-dept").selectedIndex=0;
+  document.getElementById("emp-role").selectedIndex=0;
+  setBadge("pending");
+  toast(name+" added ✓","success");
+});
+
+document.getElementById("clear-btn").addEventListener("click",function(){
+  document.getElementById("emp-id").value="";
+  document.getElementById("emp-name").value="";
+  document.getElementById("emp-dept").selectedIndex=0;
+  document.getElementById("emp-role").selectedIndex=0;
+});
+
+// ✅ SUBMIT TO SECURITY → sends to Google Sheets
+document.getElementById("submit-btn").addEventListener("click",function(){
+  if(!staffList.length){toast("Add staff first");return;}
+  var shiftDate=document.getElementById("shift-date").value;
+  if(!shiftDate){toast("Select shift date");return;}
+  var phName=document.getElementById("ph-name").value.trim()||"Production Head";
+  var btn=this;
+  btn.disabled=true;
+  toast("Saving to Sheets...","loading");
+  apiPost({
+    action:"submitList",
+    shiftDate:shiftDate,
+    staff:staffList,
+    submittedBy:phName
+  },function(err,data){
+    btn.disabled=false;
+    if(err||!data||!data.success){
+      toast("❌ Error: "+(err?err.message:(data&&data.error)||"Try again"),"error");
+      return;
+    }
+    setBadge("sent");
+    toast("✅ "+staffList.length+" staff Google Sheets mein save ho gaye!","success");
+  });
+});
+
+// ============================================================
+//  EXCEL BULK UPLOAD
+// ============================================================
+var parsedExcelRows=[];
+
+document.getElementById("triggerExcelBtn").addEventListener("click",function(){
+  document.getElementById("excelUpload").click();
+});
+
+document.getElementById("excelUpload").addEventListener("change",function(e){
+  var file=e.target.files[0]; if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(evt){
+    var data=new Uint8Array(evt.target.result);
+    var wb=XLSX.read(data,{type:"array"});
+    var ws=wb.Sheets[wb.SheetNames[0]];
+    var rows=XLSX.utils.sheet_to_json(ws,{defval:""});
+    if(!rows.length){toast("Excel empty hai");return;}
+    var clean=[];
+    for(var i=0;i<rows.length;i++){
+      var r=rows[i];
+      var id=(r["Employee ID"]||r["employee id"]||r["ID"]||r["id"]||"").toString().trim();
+      var name=(r["Full Name"]||r["full name"]||r["Name"]||r["name"]||"").toString().trim();
+      var dept=(r["Department"]||r["department"]||r["Dept"]||"").toString().trim();
+      var role=(r["Role"]||r["role"]||"").toString().trim();
+      if(id&&name)clean.push({id:id,name:name,dept:dept,role:role});
+    }
+    if(!clean.length){toast("Valid rows nahi mili");return;}
+    parsedExcelRows=clean;
+    var html='<div style="margin-bottom:6px;color:var(--text2)">📋 '+parsedExcelRows.length+' records found</div><div style="max-height:140px;overflow-y:auto;">';
+    parsedExcelRows.forEach(function(r){
+      var dup=staffList.some(function(s){return s.id===r.id;});
+      html+='<div style="padding:2px 0;font-size:10px;color:'+(dup?"var(--warn)":"var(--text2)")+'">'+esc(r.id)+' | '+esc(r.name)+(dup?" ⚠️ DUP":"")+'</div>';
     });
-}
-
-document.getElementById("add-btn").addEventListener("click", function () {
-    const name = document.getElementById("emp-name").value.trim();
-    if (!name) { toast("Enter employee name"); return; }
-    let id = document.getElementById("emp-id").value.trim();
-    if (!id) id = "SLS-" + (staffList.length + 1);
-    const dept = document.getElementById("emp-dept").value;
-    const role = document.getElementById("emp-role").value;
-    if (staffList.some(s => s.id === id)) { toast("ID already added"); return; }
-    staffList.push({ id: id, name: name, dept: dept, role: role });
-    renderStaff();
-    document.getElementById("emp-id").value = "";
-    document.getElementById("emp-name").value = "";
-    document.getElementById("emp-dept").selectedIndex = 0;
-    document.getElementById("emp-role").selectedIndex = 0;
-    document.getElementById("list-badge").className = "badge badge-pending";
-    document.getElementById("list-badge").textContent = "DRAFT";
-    localStorage.setItem("currentStaffList", JSON.stringify(staffList));
-    toast(name + " added");
+    html+='</div><div style="margin-top:6px;font-size:10px;color:var(--accent)">BULK ADD click karo import karne ke liye.</div>';
+    document.getElementById("previewTable").innerHTML=html;
+    toast(parsedExcelRows.length+" rows load. BULK ADD karo.","success");
+  };
+  reader.readAsArrayBuffer(file);
 });
 
-document.getElementById("clear-btn").addEventListener("click", function () {
-    document.getElementById("emp-id").value = "";
-    document.getElementById("emp-name").value = "";
-    document.getElementById("emp-dept").selectedIndex = 0;
-    document.getElementById("emp-role").selectedIndex = 0;
+document.getElementById("bulkAddBtn").addEventListener("click",function(){
+  if(!parsedExcelRows.length){toast("Excel data load nahi hai");return;}
+  var added=0,dupes=0;
+  parsedExcelRows.forEach(function(row){
+    if(!row.id||!row.name)return;
+    if(staffList.some(function(s){return s.id===row.id;})){dupes++;return;}
+    staffList.push({id:row.id,name:row.name,dept:row.dept||"",role:row.role||""});
+    added++;
+  });
+  renderStaff();setBadge("pending");
+  toast("✅ Imported: "+added+" new, "+dupes+" duplicates skipped.","success");
+  document.getElementById("previewTable").innerHTML="";
+  parsedExcelRows=[];
+  document.getElementById("excelUpload").value="";
 });
 
-document.getElementById("submit-btn").addEventListener("click", function () {
-    if (!staffList.length) { toast("Add staff first"); return; }
-    const phName = document.getElementById("ph-name").value.trim() || "Production Head";
-    const shiftDate = document.getElementById("shift-date").value;
-    if (!shiftDate) { toast("Select shift date"); return; }
-    
-    // Save to localStorage with date key
-    localStorage.setItem("list_" + shiftDate, JSON.stringify(staffList));
-    document.getElementById("list-badge").className = "badge badge-sent";
-    document.getElementById("list-badge").textContent = "SUBMITTED";
-    toast("✅ " + staffList.length + " staff submitted for " + shiftDate);
+document.getElementById("downloadTemplateBtn").addEventListener("click",function(){
+  var tpl=[
+    {"Employee ID":"SLS-101","Full Name":"Amit Sharma","Department":"Production","Role":"Operator"},
+    {"Employee ID":"SLS-102","Full Name":"Neha Verma","Department":"Quality Control","Role":"Supervisor"}
+  ];
+  var ws=XLSX.utils.json_to_sheet(tpl);
+  var wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,"Template");
+  XLSX.writeFile(wb,"Salus_Template.xlsx");
+  toast("Template downloaded");
 });
 
-// ==================== EXCEL BULK UPLOAD ====================
-let parsedExcelRows = [];
+// ============================================================
+//  SECURITY GATE
+// ============================================================
+var gateData={list:[],entries:[],unauth:[],enteredIds:[]};
 
-document.getElementById("triggerExcelBtn").addEventListener("click", function() {
-    document.getElementById("excelUpload").click();
-});
-
-document.getElementById("excelUpload").addEventListener("change", function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function(evt) {
-        const data = new Uint8Array(evt.target.result);
-        const workbook = XLSX.read(data, { type: 'array' });
-        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-        const rows = XLSX.utils.sheet_to_json(firstSheet, { defval: "" });
-        if (!rows.length) { toast("Excel is empty"); return; }
-        const clean = [];
-        for (let i = 0; i < rows.length; i++) {
-            const row = rows[i];
-            const id = row["Employee ID"] || row["employee id"] || row["ID"] || row["id"] || "";
-            const name = row["Full Name"] || row["full name"] || row["Name"] || row["name"] || "";
-            const dept = row["Department"] || row["department"] || row["Dept"] || "";
-            const role = row["Role"] || row["role"] || "";
-            if (id.toString().trim() && name.toString().trim()) {
-                clean.push({ id: id.toString().trim(), name: name.toString().trim(), dept: dept.toString().trim() || "", role: role.toString().trim() || "" });
-            }
-        }
-        if (clean.length === 0) { toast("No valid rows"); return; }
-        parsedExcelRows = clean;
-        let previewHtml = '<div>📋 Preview (' + parsedExcelRows.length + ' records):</div><div style="max-height:140px;overflow-y:auto;">';
-        for (let j = 0; j < parsedExcelRows.length; j++) {
-            const r = parsedExcelRows[j];
-            const alreadyExists = staffList.some(s => s.id === r.id);
-            previewHtml += '<div>' + esc(r.id) + ' | ' + esc(r.name) + (alreadyExists ? ' ⚠️ DUPLICATE' : '') + '</div>';
-        }
-        previewHtml += '</div><div>Click "BULK ADD" to import.</div>';
-        document.getElementById("previewTable").innerHTML = previewHtml;
-        toast(parsedExcelRows.length + " rows loaded. Click BULK ADD.");
-    };
-    reader.readAsArrayBuffer(file);
-});
-
-document.getElementById("bulkAddBtn").addEventListener("click", function() {
-    if (!parsedExcelRows.length) { toast("No Excel data loaded."); return; }
-    let addedCount = 0, duplicateCount = 0;
-    for (let i = 0; i < parsedExcelRows.length; i++) {
-        const row = parsedExcelRows[i];
-        if (!row.id || !row.name) continue;
-        if (staffList.some(s => s.id === row.id)) { duplicateCount++; continue; }
-        staffList.push({ id: row.id, name: row.name, dept: row.dept || "", role: row.role || "" });
-        addedCount++;
+document.getElementById("load-btn").addEventListener("click",function(){
+  var date=document.getElementById("gate-date").value;
+  if(!date){toast("Select a date");return;}
+  var btn=this; btn.disabled=true;
+  toast("Loading from Sheets...","loading");
+  apiPost({action:"getGateData",shiftDate:date},function(err,data){
+    btn.disabled=false;
+    if(err||!data||!data.success){
+      toast("❌ Load error: "+(err?err.message:(data&&data.error)||"Try again"),"error");
+      return;
     }
-    renderStaff();
-    document.getElementById("list-badge").className = "badge badge-pending";
-    document.getElementById("list-badge").textContent = "DRAFT";
-    localStorage.setItem("currentStaffList", JSON.stringify(staffList));
-    toast("✅ Imported: " + addedCount + " new, " + duplicateCount + " duplicates skipped.");
-    document.getElementById("previewTable").innerHTML = "";
-    parsedExcelRows = [];
-    document.getElementById("excelUpload").value = "";
-});
-
-document.getElementById("downloadTemplateBtn").addEventListener("click", function() {
-    const templateData = [
-        { "Employee ID": "SLS-101", "Full Name": "Amit Sharma", "Department": "Production", "Role": "Operator" },
-        { "Employee ID": "SLS-102", "Full Name": "Neha Verma", "Department": "Quality Control", "Role": "Supervisor" }
-    ];
-    const ws = XLSX.utils.json_to_sheet(templateData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Template");
-    XLSX.writeFile(wb, "Salus_Template.xlsx");
-    toast("Template downloaded");
-});
-
-// ==================== SECURITY GATE ====================
-let gateData = { list: [], entries: [], unauth: [], enteredIds: [] };
-
-document.getElementById("load-btn").addEventListener("click", function() {
-    const date = document.getElementById("gate-date").value;
-    if (!date) { toast("Select date"); return; }
-    const btn = this;
-    btn.disabled = true;
-    btn.textContent = "LOADING...";
-    
-    // Load from localStorage
-    const saved = localStorage.getItem("list_" + date);
-    const list = saved ? JSON.parse(saved) : [];
-    const savedEntries = localStorage.getItem("entries_" + date);
-    const entries = savedEntries ? JSON.parse(savedEntries) : [];
-    const savedUnauth = localStorage.getItem("unauth_" + date);
-    const unauth = savedUnauth ? JSON.parse(savedUnauth) : [];
-    
-    gateData = { list: list, entries: entries, unauth: unauth, enteredIds: entries.map(e => e.id) };
-    
-    setTimeout(function() {
-        btn.disabled = false;
-        btn.textContent = "LOAD LIST";
-        document.getElementById("s-auth").textContent = list.length;
-        document.getElementById("s-entered").textContent = entries.length;
-        document.getElementById("s-pending").textContent = Math.max(0, list.length - entries.length);
-        document.getElementById("s-unauth").textContent = unauth.length;
-        
-        const msgEl = document.getElementById("gate-status-msg");
-        msgEl.style.display = "flex";
-        if (list.length === 0) {
-            msgEl.className = "alert alert-warn";
-            msgEl.textContent = "⚠ No list found for " + date;
-        } else {
-            msgEl.className = "alert alert-success";
-            msgEl.textContent = "✓ Loaded " + list.length + " staff";
-        }
-        
-        filterGateList();
-        refreshActivityLog();
-        toast("Loaded " + list.length + " staff");
-    }, 500);
-});
-
-function filterGateList() {
-    const q = document.getElementById("gate-search").value.toLowerCase();
-    const el = document.getElementById("gate-list");
-    const enteredIds = gateData.enteredIds;
-    
-    if (!gateData.list.length) {
-        el.innerHTML = '<div style="text-align:center;padding:20px;">Load list first</div>';
-        return;
-    }
-    
-    let filtered = gateData.list;
-    if (q) {
-        filtered = gateData.list.filter(function(s) {
-            return s.name.toLowerCase().indexOf(q) >= 0 || s.id.toLowerCase().indexOf(q) >= 0;
-        });
-    }
-    
-    if (!filtered.length) {
-        el.innerHTML = '<div style="text-align:center;padding:18px;">No match found</div>';
-        return;
-    }
-    
-    el.innerHTML = filtered.map(function(s) {
-        const isEntered = enteredIds.indexOf(s.id) >= 0;
-        return '<div class="gate-item ' + (isEntered ? "entered auth" : "auth") + '">' +
-            '<div class="gate-info">' +
-                '<div class="gate-name">' + esc(s.name) + '</div>' +
-                '<div class="gate-meta">' + esc(s.id) + ' | ' + esc(s.dept||"-") + ' | ' + esc(s.role||"-") + '</div>' +
-            '</div>' +
-            (isEntered ? '<span class="badge badge-in">ENTERED</span>' : 
-             '<button class="btn btn-primary btn-sm allow-btn" data-id="' + esc(s.id) + '" data-name="' + esc(s.name) + '" data-dept="' + esc(s.dept||"") + '" data-role="' + esc(s.role||"") + '">ALLOW ENTRY</button>') +
-            '</div>';
-    }).join("");
-    
-    document.querySelectorAll(".allow-btn").forEach(function(btn) {
-        btn.addEventListener("click", function() {
-            const id = this.getAttribute("data-id");
-            const name = this.getAttribute("data-name");
-            const dept = this.getAttribute("data-dept");
-            const role = this.getAttribute("data-role");
-            markEntry(id, name, dept, role);
-        });
-    });
-}
-
-document.getElementById("gate-search").addEventListener("input", filterGateList);
-
-function markEntry(id, name, dept, role) {
-    const date = document.getElementById("gate-date").value;
-    const officer = document.getElementById("sec-name").value.trim() || "Security";
-    const entryTime = new Date().toLocaleTimeString();
-    
-    // Add to entries
-    gateData.entries.push({ id: id, name: name, dept: dept, role: role, entryTime: entryTime });
-    gateData.enteredIds.push(id);
-    
-    // Save to localStorage
-    localStorage.setItem("entries_" + date, JSON.stringify(gateData.entries));
-    
-    // Update activity log
-    const logEntry = { time: new Date().toLocaleString(), action: "ENTRY ALLOWED", detail: name + " (" + id + ")", user: officer };
-    let logs = localStorage.getItem("activityLogs");
-    logs = logs ? JSON.parse(logs) : [];
-    logs.unshift(logEntry);
-    localStorage.setItem("activityLogs", JSON.stringify(logs.slice(0, 50)));
-    
-    document.getElementById("s-entered").textContent = gateData.entries.length;
-    document.getElementById("s-pending").textContent = Math.max(0, gateData.list.length - gateData.entries.length);
-    filterGateList();
-    refreshActivityLog();
-    toast(name + " – entry allowed ✓");
-}
-
-document.getElementById("unauth-btn").addEventListener("click", function() {
-    const name = document.getElementById("un-name").value.trim();
-    const reason = document.getElementById("un-reason").value.trim() || "No reason provided";
-    const date = document.getElementById("gate-date").value;
-    const officer = document.getElementById("sec-name").value.trim() || "Security";
-    if (!name) { toast("Enter person name"); return; }
-    
-    gateData.unauth.push({ name: name, reason: reason, time: new Date().toLocaleTimeString() });
-    localStorage.setItem("unauth_" + date, JSON.stringify(gateData.unauth));
-    
-    const logEntry = { time: new Date().toLocaleString(), action: "UNAUTHORISED", detail: name + " - " + reason, user: officer };
-    let logs = localStorage.getItem("activityLogs");
-    logs = logs ? JSON.parse(logs) : [];
-    logs.unshift(logEntry);
-    localStorage.setItem("activityLogs", JSON.stringify(logs.slice(0, 50)));
-    
-    document.getElementById("s-unauth").textContent = gateData.unauth.length;
-    document.getElementById("un-name").value = "";
-    document.getElementById("un-reason").value = "";
-    refreshActivityLog();
-    toast("Unauthorised entry logged");
-});
-
-document.getElementById("refresh-log-btn").addEventListener("click", refreshActivityLog);
-
-function refreshActivityLog() {
-    const logs = localStorage.getItem("activityLogs");
-    const logList = logs ? JSON.parse(logs) : [];
-    const el = document.getElementById("activity-log");
-    if (!logList.length) {
-        el.innerHTML = '<div style="text-align:center;padding:14px;">No activity</div>';
-        return;
-    }
-    el.innerHTML = logList.map(function(l) {
-        const cls = l.action.indexOf("UNAUTHORISED") >= 0 ? "log-unauth" : "log-auth";
-        return '<div class="log-entry"><span class="log-time">' + esc(l.time) + '</span><span class="' + cls + '">' + esc(l.action) + ' – ' + esc(l.detail) + '</span></div>';
-    }).join("");
-}
-
-// ==================== CANTEEN ====================
-document.getElementById("canteen-btn").addEventListener("click", function() {
-    const date = document.getElementById("canteen-date").value;
-    if (!date) { toast("Select date"); return; }
-    
-    const savedList = localStorage.getItem("list_" + date);
-    const list = savedList ? JSON.parse(savedList) : [];
-    const savedEntries = localStorage.getItem("entries_" + date);
-    const entries = savedEntries ? JSON.parse(savedEntries) : [];
-    const savedUnauth = localStorage.getItem("unauth_" + date);
-    const unauth = savedUnauth ? JSON.parse(savedUnauth) : [];
-    
-    const dinnerCount = entries.length;
-    const buffer = Math.ceil(dinnerCount * 0.1);
-    
-    document.getElementById("c-entered").textContent = entries.length;
-    document.getElementById("c-dinner").textContent = dinnerCount;
-    document.getElementById("c-bfast").textContent = dinnerCount;
-    document.getElementById("c-unauth").textContent = unauth.length;
-    document.getElementById("m-dinner").textContent = dinnerCount;
-    document.getElementById("m-bfast").textContent = dinnerCount;
-    document.getElementById("m-buf").textContent = buffer;
-    
-    const uEl = document.getElementById("canteen-unauth");
-    if (unauth.length) {
-        uEl.innerHTML = unauth.map(function(u) { 
-            return '<div class="alert alert-danger" style="margin-bottom:6px;">' + esc(u.name) + ' – ' + esc(u.reason) + '</div>'; 
-        }).join("");
+    var enteredIds=(data.entries||[]).map(function(e){return e.id;});
+    gateData={list:data.list||[],entries:data.entries||[],unauth:data.unauth||[],enteredIds:enteredIds};
+    document.getElementById("s-auth").textContent=gateData.list.length;
+    document.getElementById("s-entered").textContent=gateData.entries.length;
+    document.getElementById("s-pending").textContent=Math.max(0,gateData.list.length-gateData.entries.length);
+    document.getElementById("s-unauth").textContent=gateData.unauth.length;
+    var msgEl=document.getElementById("gate-status-msg");
+    msgEl.style.display="flex";
+    if(!gateData.list.length){
+      msgEl.className="alert alert-warn";
+      msgEl.textContent="⚠ No list found for "+date+". Please submit the list from the Production Head tab first.";
     } else {
-        uEl.innerHTML = '<div class="text-sm">No unauthorised entries</div>';
+      msgEl.className="alert alert-success";
+      msgEl.textContent="✓ Loaded "+gateData.list.length+" authorised staff for "+date;
     }
-    
-    const reg = document.getElementById("meal-register");
-    if (!entries.length) {
-        reg.innerHTML = '<div class="text-sm" style="text-align:center;padding:16px">No entries recorded for this date yet</div>';
-        toast("No entries yet");
-        return;
-    }
-    reg.innerHTML = '<div style="display:grid;grid-template-columns:80px 1fr 110px 70px 70px;gap:6px;padding:6px 0;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:9px;color:var(--text2)">' +
-        '<span>ID</span><span>NAME</span><span>DEPT</span><span>DINNER</span><span>BREAKFAST</span>' +
-        '</div>' +
-        entries.map(function(en) {
-            return '<div style="display:grid;grid-template-columns:80px 1fr 110px 70px 70px;gap:6px;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;align-items:center">' +
-                '<span style="font-family:var(--mono);font-size:9px;color:var(--text2)">' + esc(en.id) + '</span>' +
-                '<span style="font-weight:500">' + esc(en.name) + '</span>' +
-                '<span style="font-family:var(--mono);font-size:9px;color:#5ab4ff">' + esc(en.dept||"-") + '</span>' +
-                '<span class="badge badge-in">✓</span><span class="badge badge-in">✓</span>' +
-                '</div>';
-        }).join("");
-    toast("Data loaded – " + entries.length + " entries");
+    filterGateList();
+    refreshLog();
+    toast("✅ "+gateData.list.length+" staff loaded from Sheets","success");
+  });
 });
 
-// Load saved data on start
-loadSavedData();
-toast("✅ SYSTEM READY! Add staff and submit - data saves automatically in your browser");
+function filterGateList(){
+  var q=document.getElementById("gate-search").value.toLowerCase();
+  var el=document.getElementById("gate-list");
+  if(!gateData.list.length){
+    el.innerHTML='<div style="text-align:center;padding:20px;color:var(--text2);">Pehle list load karo</div>';return;
+  }
+  var filtered=q?gateData.list.filter(function(s){
+    return s.name.toLowerCase().indexOf(q)>=0||s.id.toLowerCase().indexOf(q)>=0;
+  }):gateData.list;
+  if(!filtered.length){el.innerHTML='<div style="text-align:center;padding:18px;">Koi match nahi</div>';return;}
+  el.innerHTML=filtered.map(function(s){
+    var entered=gateData.enteredIds.indexOf(s.id)>=0;
+    return '<div class="gate-item '+(entered?"entered auth":"auth")+'">'+
+      '<div class="gate-info">'+
+        '<div class="gate-name">'+esc(s.name)+'</div>'+
+        '<div class="gate-meta">'+esc(s.id)+' | '+esc(s.dept||"-")+' | '+esc(s.role||"-")+'</div>'+
+      '</div>'+
+      (entered?'<span class="badge badge-in">ENTERED ✓</span>':
+       '<button class="btn btn-primary btn-sm allow-btn" data-id="'+esc(s.id)+'" data-name="'+esc(s.name)+'" data-dept="'+esc(s.dept||"")+'" data-role="'+esc(s.role||"")+'">ALLOW ENTRY</button>')+
+      '</div>';
+  }).join("");
+  document.querySelectorAll(".allow-btn").forEach(function(btn){
+    btn.addEventListener("click",function(){
+      allowEntry(this.getAttribute("data-id"),this.getAttribute("data-name"),this.getAttribute("data-dept"),this.getAttribute("data-role"));
+    });
+  });
+}
+
+document.getElementById("gate-search").addEventListener("input",filterGateList);
+
+function allowEntry(id,name,dept,role){
+  var date=document.getElementById("gate-date").value;
+  var officer=document.getElementById("sec-name").value.trim()||"Security";
+  toast("Marking entry for "+name+"...","loading");
+  apiPost({action:"markEntry",shiftDate:date,empId:id,name:name,dept:dept,role:role,markedBy:officer},function(err,data){
+    if(err||!data||!data.success){
+      toast("❌ Entry error: "+(err?err.message:(data&&data.error)||"Try again"),"error");return;
+    }
+    gateData.entries.push({id:id,name:name,dept:dept,role:role,entryTime:data.entryTime});
+    gateData.enteredIds.push(id);
+    document.getElementById("s-entered").textContent=gateData.entries.length;
+    document.getElementById("s-pending").textContent=Math.max(0,gateData.list.length-gateData.entries.length);
+    filterGateList();
+    refreshLog();
+    toast(name+" – entry allowed ✓ (saved to Sheets)","success");
+  });
+}
+
+document.getElementById("unauth-btn").addEventListener("click",function(){
+  var name=document.getElementById("un-name").value.trim();
+  var reason=document.getElementById("un-reason").value.trim()||"No reason";
+  var date=document.getElementById("gate-date").value;
+  var officer=document.getElementById("sec-name").value.trim()||"Security";
+  if(!name){toast("Enter person name");return;}
+  toast("Logging unauthorised entry...","loading");
+  apiPost({action:"logUnauth",shiftDate:date,personName:name,reason:reason,loggedBy:officer},function(err,data){
+    if(err||!data||!data.success){
+      toast("❌ Log error: "+(err?err.message:(data&&data.error)||"Try again"),"error");return;
+    }
+    gateData.unauth.push({name:name,reason:reason,time:data.loggedAt});
+    document.getElementById("s-unauth").textContent=gateData.unauth.length;
+    document.getElementById("un-name").value="";
+    document.getElementById("un-reason").value="";
+    refreshLog();
+    toast("Unauthorised entry logged to Sheets ✓","success");
+  });
+});
+
+document.getElementById("refresh-log-btn").addEventListener("click",function(){
+  toast("Loading activity log...","loading");
+  apiPost({action:"getLog"},function(err,data){
+    if(err||!data||!data.success){toast("Failed to load log","error");return;}
+    renderLog(data.logs||[]);
+    toastHide();
+  });
+});
+
+function refreshLog(){
+  apiPost({action:"getLog"},function(err,data){
+    if(err||!data||!data.success)return;
+    renderLog(data.logs||[]);
+  });
+}
+
+function renderLog(logs){
+  var el=document.getElementById("activity-log");
+  if(!logs.length){el.innerHTML='<div style="text-align:center;padding:14px;color:var(--text2)">No activity yet</div>';return;}
+  el.innerHTML=logs.map(function(l){
+    var cls=l.action&&l.action.indexOf("UNAUTHORISED")>=0?"log-unauth":"log-auth";
+    return '<div class="log-entry"><span class="log-time">'+esc(l.time)+'</span><span class="'+cls+'">'+esc(l.action)+' – '+esc(l.detail)+'</span></div>';
+  }).join("");
+}
+
+// ============================================================
+//  CANTEEN
+// ============================================================
+document.getElementById("canteen-btn").addEventListener("click",function(){
+  var date=document.getElementById("canteen-date").value;
+  if(!date){toast("Select a date");return;}
+  var btn=this; btn.disabled=true;
+  toast("Loading canteen data...","loading");
+  apiPost({action:"getCanteenData",shiftDate:date},function(err,data){
+    btn.disabled=false;
+    if(err||!data||!data.success){
+      toast("❌ Canteen error: "+(err?err.message:(data&&data.error)||"Try again"),"error");return;
+    }
+    var entries=data.entries||[];
+    var unauth=data.unauth||[];
+    var dinnerCount=data.dinnerCount||entries.length;
+    var buffer=data.buffer||Math.ceil(dinnerCount*0.1);
+    document.getElementById("c-entered").textContent=entries.length;
+    document.getElementById("c-dinner").textContent=dinnerCount;
+    document.getElementById("c-bfast").textContent=dinnerCount;
+    document.getElementById("c-unauth").textContent=unauth.length;
+    document.getElementById("m-dinner").textContent=dinnerCount;
+    document.getElementById("m-bfast").textContent=dinnerCount;
+    document.getElementById("m-buf").textContent=buffer;
+    var uEl=document.getElementById("canteen-unauth");
+    uEl.innerHTML=unauth.length?unauth.map(function(u){
+      return '<div class="alert alert-danger" style="margin-bottom:6px;">'+esc(u.name)+' – '+esc(u.reason)+'</div>';
+    }).join(""):'<div class="text-sm">No unauthorised entries</div>';
+    var reg=document.getElementById("meal-register");
+    if(!entries.length){
+      reg.innerHTML='<div class="text-sm" style="text-align:center;padding:16px">No entries recorded for this date</div>';
+      toast("No entries found for this date");return;
+    }
+    reg.innerHTML='<div style="display:grid;grid-template-columns:80px 1fr 110px 70px 70px;gap:6px;padding:6px 0;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:9px;color:var(--text2)">'+
+      '<span>ID</span><span>NAME</span><span>DEPT</span><span>DINNER</span><span>BFAST</span></div>'+
+      entries.map(function(en){
+        return '<div style="display:grid;grid-template-columns:80px 1fr 110px 70px 70px;gap:6px;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;align-items:center">'+
+          '<span style="font-family:var(--mono);font-size:9px;color:var(--text2)">'+esc(en.id)+'</span>'+
+          '<span style="font-weight:500">'+esc(en.name)+'</span>'+
+          '<span style="font-family:var(--mono);font-size:9px;color:#5ab4ff">'+esc(en.dept||"-")+'</span>'+
+          '<span class="badge badge-in">✓</span><span class="badge badge-in">✓</span></div>';
+      }).join("");
+    toast("✅ "+entries.length+" entries loaded from Sheets","success");
+  });
+});
+
+// Init
+toast("✅ System ready – data will be saved to Google Sheets","success");
 </script>
 </body>
 </html>
