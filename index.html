@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Salus Night Shift FMS · Bulk Excel Upload</title>
+<title>Salus Night Shift FMS</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -76,13 +76,14 @@ label{font-size:11px;color:var(--text2);margin-bottom:5px;display:block;font-fam
 .upload-area{border:1px dashed var(--border);background:rgba(0,200,150,.03);border-radius:12px;padding:14px;transition:0.2s;}
 .upload-area:hover{border-color:var(--accent);}
 .excel-hint{font-size:9px;margin-top:6px;color:var(--text2);}
+.status-badge{position:fixed;bottom:20px;left:20px;z-index:1000;background:var(--surface);border:1px solid var(--accent);border-radius:20px;padding:5px 12px;font-size:10px;font-family:var(--mono);}
 </style>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 <div id="toast"></div>
 <div class="topbar">
-  <div class="brand">SALUS // NIGHT SHIFT FMS (BULK EXCEL)</div>
+  <div class="brand">SALUS // NIGHT SHIFT FMS</div>
   <div class="tab-nav">
     <button class="tab-btn active" id="tab-prod">PRODUCTION HEAD</button>
     <button class="tab-btn" id="tab-gate">SECURITY GATE</button>
@@ -90,6 +91,7 @@ label{font-size:11px;color:var(--text2);margin-bottom:5px;display:block;font-fam
   </div>
   <div class="clock" id="clock">--:--:--</div>
 </div>
+<div class="status-badge" id="api-status">🔌 Connecting...</div>
 
 <!-- PRODUCTION HEAD PANEL -->
 <div class="panel active" id="panel-prod">
@@ -112,7 +114,7 @@ label{font-size:11px;color:var(--text2);margin-bottom:5px;display:block;font-fam
         </div>
         <button class="btn btn-warn btn-sm" id="bulkAddBtn">➕ BULK ADD (IMPORT ALL)</button>
       </div>
-      <div class="excel-hint">✅ Required columns: <strong>Employee ID, Full Name, Department, Role</strong> - Upload once, preview, then bulk import</div>
+      <div class="excel-hint">✅ Required columns: <strong>Employee ID, Full Name, Department, Role</strong></div>
       <div id="previewTable" style="margin-top:12px; max-height:200px; overflow-y:auto; font-size:11px;"></div>
     </div>
   </div>
@@ -145,7 +147,7 @@ label{font-size:11px;color:var(--text2);margin-bottom:5px;display:block;font-fam
   </div>
 </div>
 
-<!-- SECURITY GATE PANEL - FULLY WORKING -->
+<!-- SECURITY GATE PANEL -->
 <div class="panel" id="panel-gate">
   <div class="stats-grid">
     <div class="stat-box"><div class="stat-num c-blue" id="s-auth">0</div><div class="stat-label">AUTHORISED</div></div>
@@ -185,7 +187,7 @@ label{font-size:11px;color:var(--text2);margin-bottom:5px;display:block;font-fam
   </div>
 </div>
 
-<!-- CANTEEN PANEL - FULLY WORKING -->
+<!-- CANTEEN PANEL -->
 <div class="panel" id="panel-canteen">
   <div class="stats-grid">
     <div class="stat-box"><div class="stat-num c-blue" id="c-entered">0</div><div class="stat-label">INSIDE PLANT</div></div>
@@ -219,448 +221,388 @@ label{font-size:11px;color:var(--text2);margin-bottom:5px;display:block;font-fam
 </div>
 
 <script>
-// ==================== CONFIGURATION ====================
-var API_URL = "https://script.google.com/macros/s/AKfycbxwIv-LkUo-j7Im5MMa9H7_fLnv7gLKOJa5WVPYpyjqsHsuFKWUP_D-IE4JwOEh1oDdzQ/exec";
+// ==================== IMPORTANT: SET YOUR APPS SCRIPT URL HERE ====================
+// Ye URL aapne Google Apps Script deploy karne ke baad milta hai
+const API_URL = "https://script.google.com/macros/s/AKfycbxnWFT0AOo1t2lKVfPPG0dpnPdsVXAoLbllgYZDdY6A6qGcocfR8YHkK-XRZOBTh8ZJMg/exec";
+// ============================================================================
 
-// ==================== HELPER FUNCTIONS ====================
+// Helper functions
 function esc(s) { if(!s) return ""; return (""+s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 function pad(n) { return n < 10 ? "0" + n : "" + n; }
 
 function toast(msg, type) {
-  var el = document.getElementById("toast");
-  el.textContent = msg; 
-  el.style.display = "block";
-  el.style.borderColor = type === "ok" ? "var(--accent)" : type === "err" ? "var(--danger)" : "var(--warn)";
-  clearTimeout(el._t);
-  el._t = setTimeout(function () { el.style.display = "none"; }, 3500);
+    const el = document.getElementById("toast");
+    el.textContent = msg; 
+    el.style.display = "block";
+    el.style.borderColor = type === "ok" ? "var(--accent)" : type === "err" ? "var(--danger)" : "var(--warn)";
+    clearTimeout(el._t);
+    el._t = setTimeout(function () { el.style.display = "none"; }, 3500);
 }
 
 function apiCall(body, onSuccess, onError) {
-  if (!API_URL) { toast("⚠️ Please set your Apps Script URL", "err"); return; }
-  fetch(API_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body)
-  })
-  .then(function(r) { return r.json(); })
-  .then(function(data) {
-    if (data && data.success === false) {
-      (onError || function(e) { toast("Error: " + (e.message || "Unknown"), "err"); })({ message: data.error || "Unknown error" });
-    } else {
-      onSuccess(data);
+    if (!API_URL || API_URL === "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec") {
+        toast("⚠️ Please set your Google Apps Script URL in the code (API_URL line)", "err");
+        document.getElementById("api-status").innerHTML = "⚠️ Set API URL";
+        return;
     }
-  })
-  .catch(function(e) { (onError || function(e) { toast("API Error: " + e.message, "err"); })(e); });
+    
+    fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        mode: "cors",
+        body: JSON.stringify(body)
+    })
+    .then(function(r) { 
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return r.json(); 
+    })
+    .then(function(data) {
+        if (data && data.success === false) {
+            (onError || function(e) { toast("Error: " + (e.message || "Unknown"), "err"); })({ message: data.error || "Unknown error" });
+        } else {
+            onSuccess(data);
+        }
+    })
+    .catch(function(e) { 
+        toast("Connection error: " + e.message, "err");
+        (onError || function(e) { console.log(e); })(e); 
+    });
+}
+
+// Test connection
+function testConnection() {
+    if (!API_URL || API_URL === "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec") {
+        document.getElementById("api-status").innerHTML = "⚠️ Update API_URL";
+        return;
+    }
+    apiCall({ action: "getLog" }, 
+        function(r) {
+            document.getElementById("api-status").innerHTML = "✅ Connected to Google Sheets";
+            document.getElementById("api-status").style.borderColor = "var(--accent)";
+            toast("Connected to Google Sheets!", "ok");
+        },
+        function(e) {
+            document.getElementById("api-status").innerHTML = "❌ Connection failed";
+            document.getElementById("api-status").style.borderColor = "var(--danger)";
+        }
+    );
 }
 
 // Clock
 setInterval(function () {
-  var n = new Date(), h = n.getHours(), m = n.getMinutes(), s = n.getSeconds();
-  var ap = h >= 12 ? "PM" : "AM";
-  if (h > 12) h -= 12; if (h === 0) h = 12;
-  document.getElementById("clock").textContent = pad(h) + ":" + pad(m) + ":" + pad(s) + " " + ap;
+    const n = new Date();
+    let h = n.getHours();
+    const m = n.getMinutes();
+    const s = n.getSeconds();
+    const ap = h >= 12 ? "PM" : "AM";
+    if (h > 12) h -= 12;
+    if (h === 0) h = 12;
+    document.getElementById("clock").textContent = pad(h) + ":" + pad(m) + ":" + pad(s) + " " + ap;
 }, 1000);
 
 // Tab switching
-["prod","gate","canteen"].forEach(function (name) {
-  document.getElementById("tab-" + name).addEventListener("click", function () {
-    document.querySelectorAll(".tab-btn").forEach(function(b) { b.classList.remove("active"); });
-    document.querySelectorAll(".panel").forEach(function(p) { p.classList.remove("active"); });
-    this.classList.add("active");
-    document.getElementById("panel-" + name).classList.add("active");
-  });
+["prod", "gate", "canteen"].forEach(function (name) {
+    document.getElementById("tab-" + name).addEventListener("click", function () {
+        document.querySelectorAll(".tab-btn").forEach(function(b) { b.classList.remove("active"); });
+        document.querySelectorAll(".panel").forEach(function(p) { p.classList.remove("active"); });
+        this.classList.add("active");
+        document.getElementById("panel-" + name).classList.add("active");
+    });
 });
 
 // Set default dates
-var today = new Date();
-var todayStr = today.getFullYear() + "-" + pad(today.getMonth() + 1) + "-" + pad(today.getDate());
+const today = new Date();
+const todayStr = today.getFullYear() + "-" + pad(today.getMonth() + 1) + "-" + pad(today.getDate());
 document.getElementById("shift-date").value = todayStr;
 document.getElementById("gate-date").value = todayStr;
 document.getElementById("canteen-date").value = todayStr;
 
 // ==================== PRODUCTION HEAD ====================
-var staffList = [];
+let staffList = [];
 
 function renderStaff() {
-  var el = document.getElementById("staff-list");
-  document.getElementById("total-count").textContent = "Total: " + staffList.length + " staff";
-  document.getElementById("empty-msg").style.display = staffList.length ? "none" : "block";
-  if (!staffList.length) { el.innerHTML = ""; return; }
-  el.innerHTML = staffList.map(function (s, i) {
-    return '<div class="staff-item">' +
-      '<span class="emp-id">' + esc(s.id) + '</span>' +
-      '<span class="emp-name">' + esc(s.name) + '</span>' +
-      '<span class="emp-tag tag-dept">' + esc(s.dept || "-") + '</span>' +
-      '<span class="emp-tag tag-role">' + esc(s.role || "-") + '</span>' +
-      '<button class="del-btn" data-idx="' + i + '">✕</button>' +
-      '</div>';
-  }).join("");
-  el.querySelectorAll(".del-btn").forEach(function (btn) {
-    btn.addEventListener("click", function () {
-      staffList.splice(parseInt(this.getAttribute("data-idx")), 1);
-      renderStaff();
-      document.getElementById("list-badge").className = "badge badge-pending";
-      document.getElementById("list-badge").textContent = "DRAFT";
+    const el = document.getElementById("staff-list");
+    document.getElementById("total-count").textContent = "Total: " + staffList.length + " staff";
+    document.getElementById("empty-msg").style.display = staffList.length ? "none" : "block";
+    if (!staffList.length) { el.innerHTML = ""; return; }
+    el.innerHTML = staffList.map(function (s, i) {
+        return '<div class="staff-item">' +
+            '<span class="emp-id">' + esc(s.id) + '</span>' +
+            '<span class="emp-name">' + esc(s.name) + '</span>' +
+            '<span class="emp-tag tag-dept">' + esc(s.dept || "-") + '</span>' +
+            '<span class="emp-tag tag-role">' + esc(s.role || "-") + '</span>' +
+            '<button class="del-btn" data-idx="' + i + '">✕</button>' +
+            '</div>';
+    }).join("");
+    document.querySelectorAll(".del-btn").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+            staffList.splice(parseInt(this.getAttribute("data-idx")), 1);
+            renderStaff();
+            document.getElementById("list-badge").className = "badge badge-pending";
+            document.getElementById("list-badge").textContent = "DRAFT";
+        });
     });
-  });
 }
 
 document.getElementById("add-btn").addEventListener("click", function () {
-  var name = document.getElementById("emp-name").value.trim();
-  if (!name) { toast("Enter employee name", "warn"); return; }
-  var id = document.getElementById("emp-id").value.trim() || ("SLS-" + (staffList.length + 1));
-  var dept = document.getElementById("emp-dept").value;
-  var role = document.getElementById("emp-role").value;
-  if (staffList.some(function(s) { return s.id === id; })) { toast("ID already added", "warn"); return; }
-  staffList.push({ id: id, name: name, dept: dept, role: role });
-  renderStaff();
-  document.getElementById("emp-id").value = "";
-  document.getElementById("emp-name").value = "";
-  document.getElementById("emp-dept").selectedIndex = 0;
-  document.getElementById("emp-role").selectedIndex = 0;
-  document.getElementById("list-badge").className = "badge badge-pending";
-  document.getElementById("list-badge").textContent = "DRAFT";
-  toast(name + " added", "ok");
+    const name = document.getElementById("emp-name").value.trim();
+    if (!name) { toast("Enter employee name", "warn"); return; }
+    let id = document.getElementById("emp-id").value.trim();
+    if (!id) id = "SLS-" + (staffList.length + 1);
+    const dept = document.getElementById("emp-dept").value;
+    const role = document.getElementById("emp-role").value;
+    if (staffList.some(s => s.id === id)) { toast("ID already added", "warn"); return; }
+    staffList.push({ id: id, name: name, dept: dept, role: role });
+    renderStaff();
+    document.getElementById("emp-id").value = "";
+    document.getElementById("emp-name").value = "";
+    document.getElementById("emp-dept").selectedIndex = 0;
+    document.getElementById("emp-role").selectedIndex = 0;
+    document.getElementById("list-badge").className = "badge badge-pending";
+    document.getElementById("list-badge").textContent = "DRAFT";
+    toast(name + " added", "ok");
 });
 
 document.getElementById("clear-btn").addEventListener("click", function () {
-  document.getElementById("emp-id").value = "";
-  document.getElementById("emp-name").value = "";
-  document.getElementById("emp-dept").selectedIndex = 0;
-  document.getElementById("emp-role").selectedIndex = 0;
+    document.getElementById("emp-id").value = "";
+    document.getElementById("emp-name").value = "";
+    document.getElementById("emp-dept").selectedIndex = 0;
+    document.getElementById("emp-role").selectedIndex = 0;
 });
 
 document.getElementById("submit-btn").addEventListener("click", function () {
-  if (!staffList.length) { toast("Add staff first", "warn"); return; }
-  var phName = document.getElementById("ph-name").value.trim() || "Production Head";
-  var shiftDate = document.getElementById("shift-date").value;
-  if (!shiftDate) { toast("Select shift date", "warn"); return; }
-  var btn = this;
-  btn.disabled = true;
-  btn.textContent = "SUBMITTING...";
-  apiCall(
-    { action: "submitList", shiftDate: shiftDate, staff: staffList, submittedBy: phName },
-    function (r) {
-      btn.disabled = false;
-      btn.textContent = "SUBMIT TO SECURITY";
-      document.getElementById("list-badge").className = "badge badge-sent";
-      document.getElementById("list-badge").textContent = "SUBMITTED";
-      toast("List submitted – " + r.count + " staff authorised", "ok");
-    },
-    function (e) {
-      btn.disabled = false;
-      btn.textContent = "SUBMIT TO SECURITY";
-      toast("Error: " + (e.message || "Failed to submit"), "err");
-    }
-  );
+    if (!staffList.length) { toast("Add staff first", "warn"); return; }
+    const phName = document.getElementById("ph-name").value.trim() || "Production Head";
+    const shiftDate = document.getElementById("shift-date").value;
+    if (!shiftDate) { toast("Select shift date", "warn"); return; }
+    const btn = this;
+    btn.disabled = true;
+    btn.textContent = "SUBMITTING...";
+    apiCall(
+        { action: "submitList", shiftDate: shiftDate, staff: staffList, submittedBy: phName },
+        function (r) {
+            btn.disabled = false;
+            btn.textContent = "SUBMIT TO SECURITY";
+            document.getElementById("list-badge").className = "badge badge-sent";
+            document.getElementById("list-badge").textContent = "SUBMITTED";
+            toast("List submitted – " + staffList.length + " staff authorised", "ok");
+        },
+        function (e) {
+            btn.disabled = false;
+            btn.textContent = "SUBMIT TO SECURITY";
+            toast("Error: " + (e.message || "Failed to submit"), "err");
+        }
+    );
 });
 
 // ==================== EXCEL BULK UPLOAD ====================
-var parsedExcelRows = [];
+let parsedExcelRows = [];
 
 document.getElementById("triggerExcelBtn").addEventListener("click", function() {
-  document.getElementById("excelUpload").click();
+    document.getElementById("excelUpload").click();
 });
 
 document.getElementById("excelUpload").addEventListener("change", function(e) {
-  var file = e.target.files[0];
-  if (!file) return;
-  var reader = new FileReader();
-  reader.onload = function(evt) {
-    var data = new Uint8Array(evt.target.result);
-    var workbook = XLSX.read(data, { type: 'array' });
-    var firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-    var rows = XLSX.utils.sheet_to_json(firstSheet, { defval: "" });
-    if (!rows.length) { toast("Excel is empty", "err"); return; }
-    
-    var clean = [];
-    for (var i = 0; i < rows.length; i++) {
-      var row = rows[i];
-      var id = row["Employee ID"] || row["employee id"] || row["ID"] || row["id"] || "";
-      var name = row["Full Name"] || row["full name"] || row["Name"] || row["name"] || "";
-      var dept = row["Department"] || row["department"] || row["Dept"] || "";
-      var role = row["Role"] || row["role"] || "";
-      
-      if (id.toString().trim() && name.toString().trim()) {
-        clean.push({ 
-          id: id.toString().trim(), 
-          name: name.toString().trim(), 
-          dept: dept.toString().trim() || "", 
-          role: role.toString().trim() || "" 
-        });
-      }
-    }
-    
-    if (clean.length === 0) { toast("No valid rows (need Employee ID & Full Name)", "err"); return; }
-    parsedExcelRows = clean;
-    
-    var previewHtml = '<div style="font-family:var(--mono);font-size:9px;margin-bottom:6px;">📋 Preview (' + parsedExcelRows.length + ' records):</div><div style="max-height:140px;overflow-y:auto;">';
-    for (var j = 0; j < parsedExcelRows.length; j++) {
-      var r = parsedExcelRows[j];
-      var alreadyExists = staffList.some(function(s) { return s.id === r.id; });
-      previewHtml += '<div style="border-bottom:1px solid var(--border);padding:5px 0;display:flex;gap:6px;align-items:center;flex-wrap:wrap;">' +
-        '<span style="min-width:70px;">' + esc(r.id) + '</span>' +
-        '<span style="min-width:100px;">' + esc(r.name) + '</span>' +
-        '<span style="min-width:80px;">' + esc(r.dept || '-') + '</span>' +
-        '<span>' + esc(r.role || '-') + '</span>' +
-        (alreadyExists ? '<span style="background:rgba(255,149,0,.3);padding:2px 6px;border-radius:4px;">⚠️ DUPLICATE</span>' : '') +
-        '</div>';
-    }
-    previewHtml += '</div><div class="text-sm mt8">Click "BULK ADD" to import new staff (duplicates will be skipped).</div>';
-    document.getElementById("previewTable").innerHTML = previewHtml;
-    toast(parsedExcelRows.length + " rows loaded. Click BULK ADD to import.", "ok");
-  };
-  reader.readAsArrayBuffer(file);
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+        const data = new Uint8Array(evt.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(firstSheet, { defval: "" });
+        if (!rows.length) { toast("Excel is empty", "err"); return; }
+        const clean = [];
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            const id = row["Employee ID"] || row["employee id"] || row["ID"] || row["id"] || "";
+            const name = row["Full Name"] || row["full name"] || row["Name"] || row["name"] || "";
+            const dept = row["Department"] || row["department"] || row["Dept"] || "";
+            const role = row["Role"] || row["role"] || "";
+            if (id.toString().trim() && name.toString().trim()) {
+                clean.push({ id: id.toString().trim(), name: name.toString().trim(), dept: dept.toString().trim() || "", role: role.toString().trim() || "" });
+            }
+        }
+        if (clean.length === 0) { toast("No valid rows (need Employee ID & Full Name)", "err"); return; }
+        parsedExcelRows = clean;
+        let previewHtml = '<div style="font-family:var(--mono);font-size:9px;margin-bottom:6px;">📋 Preview (' + parsedExcelRows.length + ' records):</div><div style="max-height:140px;overflow-y:auto;">';
+        for (let j = 0; j < parsedExcelRows.length; j++) {
+            const r = parsedExcelRows[j];
+            const alreadyExists = staffList.some(s => s.id === r.id);
+            previewHtml += '<div style="border-bottom:1px solid var(--border);padding:5px 0;display:flex;gap:6px;align-items:center;flex-wrap:wrap;">' +
+                '<span style="min-width:70px;">' + esc(r.id) + '</span>' +
+                '<span style="min-width:100px;">' + esc(r.name) + '</span>' +
+                '<span style="min-width:80px;">' + esc(r.dept || '-') + '</span>' +
+                '<span>' + esc(r.role || '-') + '</span>' +
+                (alreadyExists ? '<span style="background:rgba(255,149,0,.3);padding:2px 6px;border-radius:4px;">⚠️ DUPLICATE</span>' : '') +
+                '</div>';
+        }
+        previewHtml += '</div><div class="text-sm mt8">Click "BULK ADD" to import new staff (duplicates will be skipped).</div>';
+        document.getElementById("previewTable").innerHTML = previewHtml;
+        toast(parsedExcelRows.length + " rows loaded. Click BULK ADD to import.", "ok");
+    };
+    reader.readAsArrayBuffer(file);
 });
 
 document.getElementById("bulkAddBtn").addEventListener("click", function() {
-  if (!parsedExcelRows.length) { toast("No Excel data loaded. Upload file first.", "warn"); return; }
-  var addedCount = 0;
-  var duplicateCount = 0;
-  for (var i = 0; i < parsedExcelRows.length; i++) {
-    var row = parsedExcelRows[i];
-    if (!row.id || !row.name) continue;
-    if (staffList.some(function(s) { return s.id === row.id; })) {
-      duplicateCount++;
-      continue;
+    if (!parsedExcelRows.length) { toast("No Excel data loaded. Upload file first.", "warn"); return; }
+    let addedCount = 0, duplicateCount = 0;
+    for (let i = 0; i < parsedExcelRows.length; i++) {
+        const row = parsedExcelRows[i];
+        if (!row.id || !row.name) continue;
+        if (staffList.some(s => s.id === row.id)) { duplicateCount++; continue; }
+        staffList.push({ id: row.id, name: row.name, dept: row.dept || "", role: row.role || "" });
+        addedCount++;
     }
-    staffList.push({
-      id: row.id,
-      name: row.name,
-      dept: row.dept || "",
-      role: row.role || ""
-    });
-    addedCount++;
-  }
-  renderStaff();
-  document.getElementById("list-badge").className = "badge badge-pending";
-  document.getElementById("list-badge").textContent = "DRAFT";
-  toast("✅ Imported: " + addedCount + " new staff, " + duplicateCount + " duplicates skipped.", "ok");
-  document.getElementById("previewTable").innerHTML = '<div class="text-sm">✔ Import completed. ' + addedCount + ' employees added.</div>';
-  parsedExcelRows = [];
-  document.getElementById("excelUpload").value = "";
+    renderStaff();
+    document.getElementById("list-badge").className = "badge badge-pending";
+    document.getElementById("list-badge").textContent = "DRAFT";
+    toast("✅ Imported: " + addedCount + " new staff, " + duplicateCount + " duplicates skipped.", "ok");
+    document.getElementById("previewTable").innerHTML = '<div class="text-sm">✔ Import completed. ' + addedCount + ' employees added.</div>';
+    parsedExcelRows = [];
+    document.getElementById("excelUpload").value = "";
 });
 
 document.getElementById("downloadTemplateBtn").addEventListener("click", function() {
-  var templateData = [
-    { "Employee ID": "SLS-101", "Full Name": "Amit Sharma", "Department": "Production", "Role": "Operator" },
-    { "Employee ID": "SLS-102", "Full Name": "Neha Verma", "Department": "Quality Control", "Role": "Supervisor" },
-    { "Employee ID": "SLS-103", "Full Name": "Rajesh Kumar", "Department": "Warehouse", "Role": "Helper" }
-  ];
-  var ws = XLSX.utils.json_to_sheet(templateData);
-  var wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "NightShift_Staff");
-  XLSX.writeFile(wb, "Salus_Bulk_Template.xlsx");
-  toast("Template downloaded", "ok");
+    const templateData = [
+        { "Employee ID": "SLS-101", "Full Name": "Amit Sharma", "Department": "Production", "Role": "Operator" },
+        { "Employee ID": "SLS-102", "Full Name": "Neha Verma", "Department": "Quality Control", "Role": "Supervisor" },
+        { "Employee ID": "SLS-103", "Full Name": "Rajesh Kumar", "Department": "Warehouse", "Role": "Helper" }
+    ];
+    const ws = XLSX.utils.json_to_sheet(templateData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "NightShift_Staff");
+    XLSX.writeFile(wb, "Salus_Bulk_Template.xlsx");
+    toast("Template downloaded", "ok");
 });
 
-// ==================== SECURITY GATE ====================
-var gateData = { list: [], entries: [], unauth: [] };
+// ==================== SECURITY GATE (Short version - same as before) ====================
+let gateData = { list: [], entries: [], unauth: [] };
 
 document.getElementById("load-btn").addEventListener("click", function() {
-  var date = document.getElementById("gate-date").value;
-  var msgEl = document.getElementById("gate-status-msg");
-  if (!date) { toast("Select date", "warn"); return; }
-  var btn = this;
-  btn.disabled = true;
-  btn.textContent = "LOADING...";
-  msgEl.style.display = "flex";
-  msgEl.className = "alert alert-warn";
-  msgEl.textContent = "Loading list...";
-  
-  apiCall(
-    { action: "getGateData", shiftDate: date },
-    function(r) {
-      btn.disabled = false;
-      btn.textContent = "LOAD LIST";
-      gateData = r;
-      if (r.list.length === 0) {
-        msgEl.className = "alert alert-warn";
-        msgEl.textContent = "⚠ No authorised list found for " + date;
-      } else {
-        msgEl.className = "alert alert-success";
-        msgEl.textContent = "✓ Loaded " + r.list.length + " authorised staff";
-      }
-      updateGateStats();
-      filterGateList();
-      refreshActivityLog();
-    },
-    function(e) {
-      btn.disabled = false;
-      btn.textContent = "LOAD LIST";
-      msgEl.style.display = "none";
-      toast("Error: " + (e.message || "Failed"), "err");
-    }
-  );
+    const date = document.getElementById("gate-date").value;
+    const msgEl = document.getElementById("gate-status-msg");
+    if (!date) { toast("Select date", "warn"); return; }
+    const btn = this;
+    btn.disabled = true;
+    btn.textContent = "LOADING...";
+    msgEl.style.display = "flex";
+    msgEl.className = "alert alert-warn";
+    msgEl.textContent = "Loading list...";
+    apiCall({ action: "getGateData", shiftDate: date },
+        function(r) {
+            btn.disabled = false;
+            btn.textContent = "LOAD LIST";
+            gateData = r;
+            if (r.list.length === 0) { msgEl.className = "alert alert-warn"; msgEl.textContent = "⚠ No authorised list found for " + date; }
+            else { msgEl.className = "alert alert-success"; msgEl.textContent = "✓ Loaded " + r.list.length + " authorised staff"; }
+            updateGateStats();
+            filterGateList();
+            refreshActivityLog();
+        },
+        function(e) { btn.disabled = false; btn.textContent = "LOAD LIST"; msgEl.style.display = "none"; toast("Error: " + (e.message || "Failed"), "err"); }
+    );
 });
 
 function updateGateStats() {
-  document.getElementById("s-auth").textContent = gateData.list.length;
-  document.getElementById("s-entered").textContent = gateData.entries.length;
-  document.getElementById("s-pending").textContent = Math.max(0, gateData.list.length - gateData.entries.length);
-  document.getElementById("s-unauth").textContent = gateData.unauth.length;
+    document.getElementById("s-auth").textContent = gateData.list.length;
+    document.getElementById("s-entered").textContent = gateData.entries.length;
+    document.getElementById("s-pending").textContent = Math.max(0, gateData.list.length - gateData.entries.length);
+    document.getElementById("s-unauth").textContent = gateData.unauth.length;
 }
 
 document.getElementById("gate-search").addEventListener("input", filterGateList);
 
 function filterGateList() {
-  var q = document.getElementById("gate-search").value.toLowerCase();
-  var el = document.getElementById("gate-list");
-  var enteredIds = gateData.entries.map(function(e) { return e.id; });
-  
-  if (!gateData.list.length) {
-    el.innerHTML = '<div style="text-align:center;padding:20px;">Load list first</div>';
-    return;
-  }
-  var filtered = gateData.list.filter(function(s) {
-    return !q || s.name.toLowerCase().indexOf(q) >= 0 || s.id.toLowerCase().indexOf(q) >= 0;
-  });
-  if (!filtered.length) {
-    el.innerHTML = '<div style="text-align:center;padding:18px;">No match found</div>';
-    return;
-  }
-  el.innerHTML = filtered.map(function(s) {
-    var isEntered = enteredIds.indexOf(s.id) >= 0;
-    var entryTime = "";
-    if(isEntered) {
-      var entry = gateData.entries.find(function(e) { return e.id === s.id; });
-      entryTime = entry ? entry.entryTime : "";
-    }
-    return '<div class="gate-item ' + (isEntered ? "entered auth" : "auth") + '">' +
-      '<div class="gate-info">' +
-        '<div class="gate-name">' + esc(s.name) + '</div>' +
-        '<div class="gate-meta">' + esc(s.id) + ' | ' + esc(s.dept||"-") + ' | ' + esc(s.role||"-") + (isEntered ? ' | Entered: ' + entryTime : '') + '</div>' +
-      '</div>' +
-      (isEntered ? '<span class="badge badge-in">ENTERED</span>' : 
-       '<button class="btn btn-primary btn-sm allow-btn" data-id="' + esc(s.id) + '" data-name="' + esc(s.name) + '" data-dept="' + esc(s.dept||"") + '" data-role="' + esc(s.role||"") + '">ALLOW ENTRY</button>') +
-      '</div>';
-  }).join("");
-  
-  el.querySelectorAll(".allow-btn").forEach(function(btn) {
-    btn.addEventListener("click", function() {
-      var id = this.getAttribute("data-id");
-      var name = this.getAttribute("data-name");
-      var dept = this.getAttribute("data-dept");
-      var role = this.getAttribute("data-role");
-      markEntry(id, name, dept, role);
+    const q = document.getElementById("gate-search").value.toLowerCase();
+    const el = document.getElementById("gate-list");
+    const enteredIds = gateData.entries.map(e => e.id);
+    if (!gateData.list.length) { el.innerHTML = '<div style="text-align:center;padding:20px;">Load list first</div>'; return; }
+    const filtered = gateData.list.filter(s => !q || s.name.toLowerCase().indexOf(q) >= 0 || s.id.toLowerCase().indexOf(q) >= 0);
+    if (!filtered.length) { el.innerHTML = '<div style="text-align:center;padding:18px;">No match found</div>'; return; }
+    el.innerHTML = filtered.map(s => {
+        const isEntered = enteredIds.indexOf(s.id) >= 0;
+        let entryTime = "";
+        if(isEntered) { const entry = gateData.entries.find(e => e.id === s.id); entryTime = entry ? entry.entryTime : ""; }
+        return '<div class="gate-item ' + (isEntered ? "entered auth" : "auth") + '">' +
+            '<div class="gate-info"><div class="gate-name">' + esc(s.name) + '</div><div class="gate-meta">' + esc(s.id) + ' | ' + esc(s.dept||"-") + ' | ' + esc(s.role||"-") + (isEntered ? ' | Entered: ' + entryTime : '') + '</div></div>' +
+            (isEntered ? '<span class="badge badge-in">ENTERED</span>' : '<button class="btn btn-primary btn-sm allow-btn" data-id="' + esc(s.id) + '" data-name="' + esc(s.name) + '" data-dept="' + esc(s.dept||"") + '" data-role="' + esc(s.role||"") + '">ALLOW ENTRY</button>') +
+            '</div>';
+    }).join("");
+    document.querySelectorAll(".allow-btn").forEach(function(btn) {
+        btn.addEventListener("click", function() {
+            markEntry(this.getAttribute("data-id"), this.getAttribute("data-name"), this.getAttribute("data-dept"), this.getAttribute("data-role"));
+        });
     });
-  });
 }
 
 function markEntry(id, name, dept, role) {
-  var date = document.getElementById("gate-date").value;
-  var officer = document.getElementById("sec-name").value.trim() || "Security";
-  toast("Marking entry for " + name + "...", "warn");
-  
-  apiCall(
-    { action: "markEntry", shiftDate: date, empId: id, name: name, dept: dept, role: role, markedBy: officer },
-    function(r) {
-      gateData.entries.push({ id: id, name: name, dept: dept, role: role, entryTime: r.entryTime });
-      updateGateStats();
-      filterGateList();
-      refreshActivityLog();
-      toast(name + " – entry allowed ✓", "ok");
-    },
-    function(e) { toast("Error marking entry: " + (e.message || "Unknown"), "err"); }
-  );
+    const date = document.getElementById("gate-date").value;
+    const officer = document.getElementById("sec-name").value.trim() || "Security";
+    toast("Marking entry for " + name + "...", "warn");
+    apiCall({ action: "markEntry", shiftDate: date, empId: id, name: name, dept: dept, role: role, markedBy: officer },
+        function(r) { gateData.entries.push({ id: id, name: name, dept: dept, role: role, entryTime: r.entryTime }); updateGateStats(); filterGateList(); refreshActivityLog(); toast(name + " – entry allowed ✓", "ok"); },
+        function(e) { toast("Error marking entry: " + (e.message || "Unknown"), "err"); }
+    );
 }
 
 document.getElementById("unauth-btn").addEventListener("click", function() {
-  var name = document.getElementById("un-name").value.trim();
-  var reason = document.getElementById("un-reason").value.trim() || "No reason provided";
-  var date = document.getElementById("gate-date").value;
-  var officer = document.getElementById("sec-name").value.trim() || "Security";
-  if (!name) { toast("Enter person name", "warn"); return; }
-  
-  apiCall(
-    { action: "logUnauth", shiftDate: date, personName: name, reason: reason, loggedBy: officer },
-    function(r) {
-      gateData.unauth.push({ name: name, reason: reason, time: r.loggedAt });
-      updateGateStats();
-      refreshActivityLog();
-      document.getElementById("un-name").value = "";
-      document.getElementById("un-reason").value = "";
-      toast("Unauthorised entry logged", "warn");
-    },
-    function(e) { toast("Error: " + (e.message || "Unknown"), "err"); }
-  );
+    const name = document.getElementById("un-name").value.trim();
+    const reason = document.getElementById("un-reason").value.trim() || "No reason provided";
+    const date = document.getElementById("gate-date").value;
+    const officer = document.getElementById("sec-name").value.trim() || "Security";
+    if (!name) { toast("Enter person name", "warn"); return; }
+    apiCall({ action: "logUnauth", shiftDate: date, personName: name, reason: reason, loggedBy: officer },
+        function(r) { gateData.unauth.push({ name: name, reason: reason, time: r.loggedAt }); updateGateStats(); refreshActivityLog(); document.getElementById("un-name").value = ""; document.getElementById("un-reason").value = ""; toast("Unauthorised entry logged", "warn"); },
+        function(e) { toast("Error: " + (e.message || "Unknown"), "err"); }
+    );
 });
 
 document.getElementById("refresh-log-btn").addEventListener("click", refreshActivityLog);
 
 function refreshActivityLog() {
-  apiCall({ action: "getLog" }, function(r) {
-    var logs = r.logs || [];
-    var el = document.getElementById("activity-log");
-    if (!logs.length) {
-      el.innerHTML = '<div style="text-align:center;padding:14px;">No activity</div>';
-      return;
-    }
-    el.innerHTML = logs.map(function(l) {
-      var cls = l.action.indexOf("UNAUTH") >= 0 ? "log-unauth" : "log-auth";
-      return '<div class="log-entry"><span class="log-time">' + esc(l.time) + '</span><span class="' + cls + '">' + esc(l.action) + ' – ' + esc(l.detail) + '</span></div>';
-    }).join("");
-  });
+    apiCall({ action: "getLog" }, function(r) {
+        const logs = r.logs || [];
+        const el = document.getElementById("activity-log");
+        if (!logs.length) { el.innerHTML = '<div style="text-align:center;padding:14px;">No activity</div>'; return; }
+        el.innerHTML = logs.map(function(l) { return '<div class="log-entry"><span class="log-time">' + esc(l.time) + '</span><span class="' + (l.action.indexOf("UNAUTH") >= 0 ? "log-unauth" : "log-auth") + '">' + esc(l.action) + ' – ' + esc(l.detail) + '</span></div>'; }).join("");
+    });
 }
 
 // ==================== CANTEEN ====================
 document.getElementById("canteen-btn").addEventListener("click", function() {
-  var date = document.getElementById("canteen-date").value;
-  if (!date) { toast("Select date", "warn"); return; }
-  var btn = this;
-  btn.disabled = true;
-  btn.textContent = "LOADING...";
-  
-  apiCall(
-    { action: "getCanteenData", shiftDate: date },
-    function(r) {
-      btn.disabled = false;
-      btn.textContent = "REFRESH DATA";
-      document.getElementById("c-entered").textContent = r.entries.length;
-      document.getElementById("c-dinner").textContent = r.dinnerCount;
-      document.getElementById("c-bfast").textContent = r.breakfastCount || r.dinnerCount;
-      document.getElementById("c-unauth").textContent = r.unauthCount;
-      document.getElementById("m-dinner").textContent = r.dinnerCount;
-      document.getElementById("m-bfast").textContent = r.breakfastCount || r.dinnerCount;
-      document.getElementById("m-buf").textContent = r.buffer;
-      
-      var uEl = document.getElementById("canteen-unauth");
-      if (r.unauth && r.unauth.length) {
-        uEl.innerHTML = r.unauth.map(function(u) { 
-          return '<div class="alert alert-danger" style="margin-bottom:6px;">' + esc(u.name) + ' – ' + esc(u.reason) + '</div>'; 
-        }).join("");
-      } else {
-        uEl.innerHTML = '<div class="text-sm">No unauthorised entries</div>';
-      }
-      
-      var reg = document.getElementById("meal-register");
-      if (!r.entries.length) {
-        reg.innerHTML = '<div class="text-sm" style="text-align:center;padding:16px">No entries recorded for this date yet</div>';
-        toast("No entries yet", "warn");
-        return;
-      }
-      reg.innerHTML = '<div style="display:grid;grid-template-columns:80px 1fr 110px 70px 70px;gap:6px;padding:6px 0;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:9px;color:var(--text2)">' +
-        '<span>ID</span><span>NAME</span><span>DEPT</span><span>DINNER</span><span>BREAKFAST</span>' +
-        '</div>' +
-        r.entries.map(function(en) {
-          return '<div style="display:grid;grid-template-columns:80px 1fr 110px 70px 70px;gap:6px;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;align-items:center">' +
-            '<span style="font-family:var(--mono);font-size:9px;color:var(--text2)">' + esc(en.id) + '</span>' +
-            '<span style="font-weight:500">' + esc(en.name) + '</span>' +
-            '<span style="font-family:var(--mono);font-size:9px;color:#5ab4ff">' + esc(en.dept||"-") + '</span>' +
-            '<span class="badge badge-in">✓</span><span class="badge badge-in">✓</span>' +
-            '</div>';
-        }).join("");
-      toast("Data loaded – " + r.entries.length + " entries", "ok");
-    },
-    function(e) {
-      btn.disabled = false;
-      btn.textContent = "REFRESH DATA";
-      toast("Error: " + (e.message || "Failed to load"), "err");
-    }
-  );
+    const date = document.getElementById("canteen-date").value;
+    if (!date) { toast("Select date", "warn"); return; }
+    const btn = this;
+    btn.disabled = true;
+    btn.textContent = "LOADING...";
+    apiCall({ action: "getCanteenData", shiftDate: date },
+        function(r) {
+            btn.disabled = false;
+            btn.textContent = "REFRESH DATA";
+            document.getElementById("c-entered").textContent = r.entries.length;
+            document.getElementById("c-dinner").textContent = r.dinnerCount;
+            document.getElementById("c-bfast").textContent = r.dinnerCount;
+            document.getElementById("c-unauth").textContent = r.unauthCount;
+            document.getElementById("m-dinner").textContent = r.dinnerCount;
+            document.getElementById("m-bfast").textContent = r.dinnerCount;
+            document.getElementById("m-buf").textContent = r.buffer;
+            const uEl = document.getElementById("canteen-unauth");
+            if (r.unauth && r.unauth.length) { uEl.innerHTML = r.unauth.map(function(u) { return '<div class="alert alert-danger" style="margin-bottom:6px;">' + esc(u.name) + ' – ' + esc(u.reason) + '</div>'; }).join(""); }
+            else { uEl.innerHTML = '<div class="text-sm">No unauthorised entries</div>'; }
+            const reg = document.getElementById("meal-register");
+            if (!r.entries.length) { reg.innerHTML = '<div class="text-sm" style="text-align:center;padding:16px">No entries recorded for this date yet</div>'; toast("No entries yet", "warn"); return; }
+            reg.innerHTML = '<div style="display:grid;grid-template-columns:80px 1fr 110px 70px 70px;gap:6px;padding:6px 0;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:9px;color:var(--text2)"><span>ID</span><span>NAME</span><span>DEPT</span><span>DINNER</span><span>BREAKFAST</span></div>' +
+                r.entries.map(function(en) { return '<div style="display:grid;grid-template-columns:80px 1fr 110px 70px 70px;gap:6px;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;align-items:center"><span style="font-family:var(--mono);font-size:9px;color:var(--text2)">' + esc(en.id) + '</span><span style="font-weight:500">' + esc(en.name) + '</span><span style="font-family:var(--mono);font-size:9px;color:#5ab4ff">' + esc(en.dept||"-") + '</span><span class="badge badge-in">✓</span><span class="badge badge-in">✓</span></div>'; }).join("");
+            toast("Data loaded – " + r.entries.length + " entries", "ok");
+        },
+        function(e) { btn.disabled = false; btn.textContent = "REFRESH DATA"; toast("Error: " + (e.message || "Failed to load"), "err"); }
+    );
 });
 
-toast("✅ System ready! Upload Excel for bulk entry (100-200 employees at once)", "ok");
+// Test connection on load
+setTimeout(testConnection, 1000);
+toast("✅ System ready! Update the API_URL with your Apps Script URL", "ok");
 </script>
 </body>
 </html>
